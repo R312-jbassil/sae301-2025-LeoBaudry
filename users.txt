@@ -1,0 +1,5 @@
+login admin PB : leo.baudry@edu.univ-fcomte.fr
+MDP admin PB: SAE301SAE301
+
+login utilisateur "test1" PB : 
+MDP utilisateur "test1" PB : ws9z9ehgZ9WzgFM
