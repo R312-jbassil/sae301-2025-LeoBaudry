@@ -1,0 +1,51 @@
+<div id="promo-bar" class="fixed top-0 left-0 right-0 z-60 bg-secondary text-white text-center py-2 px-4">
+  <p class="text-sm">
+    Connectez-vous et profitez de 15% de réduction sur votre première paire. 
+    <a href="/login" class="underline font-bold">S'inscrire maintenant</a>
+  </p>
+  <button 
+    id="close-promo" 
+    class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:opacity-70"
+    aria-label="Fermer"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+    </svg>
+  </button>
+</div>
+
+<script>
+  const promoBar = document.getElementById('promo-bar');
+  const closeBtn = document.getElementById('close-promo');
+  const header = document.getElementById('main-header');
+  const mainContent = document.querySelector('main');
+
+  function updateLayout(promoVisible: boolean) {
+    if (promoVisible) {
+      header?.classList.add('top-8');
+      header?.classList.remove('top-0');
+      mainContent?.classList.add('pt-24'); // Promo (32px) + Header (64px)
+      mainContent?.classList.remove('pt-16');
+    } else {
+      header?.classList.remove('top-8');
+      header?.classList.add('top-0');
+      mainContent?.classList.remove('pt-24');
+      mainContent?.classList.add('pt-16'); // Header seul (64px)
+    }
+  }
+
+  // Check si déjà fermé
+  if (localStorage.getItem('promo-bar-closed') === 'true') {
+    promoBar?.classList.add('hidden');
+    updateLayout(false);
+  } else {
+    updateLayout(true);
+  }
+
+  // Fermer la promo
+  closeBtn?.addEventListener('click', () => {
+    promoBar?.classList.add('hidden');
+    localStorage.setItem('promo-bar-closed', 'true');
+    updateLayout(false);
+  });
+</script>

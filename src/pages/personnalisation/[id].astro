@@ -1,0 +1,65 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PersonnalisationTabs from '../../components/PersonnalisationTabs.astro';
+import pb from '../../utils/pb';
+import flecheIcon from '../../assets/svgs/fleche1.svg';
+
+const id = Astro.params.id as string | undefined;
+if (!id) {
+  throw new Error('Missing model id');
+}
+
+const modele = await pb.collection('Modeles').getOne(id, {
+  requestKey: null
+});
+
+const materiauxMonture = await pb.collection('Materiau').getFullList({
+  filter: 'type_cible ~ "Monture"',
+  requestKey: null
+});
+
+const materiauxVerres = await pb.collection('Materiau').getFullList({
+  filter: 'type_cible ~ "Verres"',
+  requestKey: null
+});
+
+const materiauxBranches = await pb.collection('Materiau').getFullList({
+  filter: 'type_cible ~ "Branches"',
+  requestKey: null
+});
+---
+
+<Layout title={`Personnaliser ${modele.nom_modele}`}>
+  <div class="grid lg:grid-cols-3 pt-16">
+    <!-- GAUCHE : Preview SVG (1/3) -->
+    <div class="lg:col-span-1 flex items-center justify-center p-8 lg:p-12 bg-base-200 min-h-screen">
+      <div id="svg-container" class="w-full max-w-sm">
+        <div set:html={modele.svg} />
+      </div>
+    </div>
+
+    <!-- DROITE : Options de personnalisation (2/3) -->
+    <div class="lg:col-span-2 p-6 lg:p-16 flex flex-col">
+      <h1 class="text-3xl lg:text-4xl font-display mb-8">{modele.nom_modele}</h1>
+      
+      <PersonnalisationTabs 
+        materiauxMonture={materiauxMonture}
+        materiauxVerres={materiauxVerres}
+        materiauxBranches={materiauxBranches}
+      />
+
+      <!-- Boutons en bas à droite -->
+      <div class="mt-auto flex items-center gap-4 justify-end pt-12">
+        <button class="btn btn-outline h-12 px-6">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+        </button>
+        <button class="btn btn-accent h-12 px-8 flex items-center gap-2">
+          Finaliser
+          <img src={flecheIcon.src} alt="" class="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,131 @@
+---
+import tavueLogo from '../assets/svgs/tavue.svg';
+import userIcon from '../assets/svgs/user.svg';
+import panierIcon from '../assets/svgs/panier.svg';
+import flecheIcon from '../assets/svgs/fleche1.svg';
+---
+
+<header class="fixed left-0 right-0 z-80 bg-base-100 border-b border-base-300 transition-all duration-300" id="main-header">
+  <div class="container mx-auto px-4">
+    <div class="flex items-center justify-between h-16">
+      <!-- Menu hamburger (gauche) -->
+      <button id="menu-toggle" class="relative z-90 flex flex-col gap-1 justify-center items-center w-8 h-8 focus:outline-none" aria-label="Menu">
+        <span class="block bg-secondary h-0.5 transition-all duration-300 ease-in-out" style="width: 36px"></span>
+        <span class="block bg-secondary h-0.5 transition-all duration-300 ease-in-out" style="width: 33px"></span>
+        <span class="block bg-secondary h-0.5 transition-all duration-300 ease-in-out" style="width: 30px"></span>
+      </button>
+
+      <!-- Logo TAVUE (centré) -->
+      <a href="/" class="absolute left-1/2 -translate-x-1/2">
+        <img src={tavueLogo.src} alt="TAVUE" class="h-8" />
+      </a>
+
+      <!-- Actions droite -->
+      <div class="flex items-center gap-4">
+        <!-- Langues -->
+        <div class="hidden lg:flex gap-2 text-sm">
+          <button class="font-bold">FR</button>
+          <span class="text-neutral">|</span>
+          <button class="text-neutral hover:text-base-content">EN</button>
+        </div>
+
+        <!-- User -->
+        <a href="/login" aria-label="Mon compte">
+          <img src={userIcon.src} alt="Compte" class="w-6 h-6" />
+        </a>
+
+        <!-- Panier -->
+        <a href="/panier" aria-label="Panier">
+          <img src={panierIcon.src} alt="Panier" class="w-6 h-6" />
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Menu slide -->
+<div id="menu-slide" class="fixed top-0 left-0 h-full w-80 bg-base-100 shadow-2xl z-70 transform -translate-x-full transition-transform duration-300 ease-in-out">
+  <div class="p-8 pt-20">
+    <h2 class="text-2xl font-display font-bold mb-8">Nos modèles à personnaliser</h2>
+    <nav class="space-y-4" id="menu-nav">
+      <!-- Chargé dynamiquement -->
+    </nav>
+  </div>
+</div>
+
+<!-- Overlay -->
+<div id="menu-overlay" class="fixed inset-0 bg-black/50 z-65 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+<script>
+  import pb from '../utils/pb';
+  import flecheUrl from '../assets/svgs/fleche1.svg';
+
+  const menuToggle = document.getElementById('menu-toggle');
+  const menuSlide = document.getElementById('menu-slide');
+  const menuOverlay = document.getElementById('menu-overlay');
+  const menuNav = document.getElementById('menu-nav');
+  const spans = menuToggle?.querySelectorAll('span');
+
+  let menuOpen = false;
+
+  // Charger les modèles dynamiquement
+  async function loadMenuModels() {
+    try {
+      const modeles = await pb.collection('Modeles').getFullList({
+        sort: 'created',
+      });
+
+      menuNav!.innerHTML = modeles.map(modele => `
+        <a 
+          href="/personnalisation/${modele.id}"
+          class="flex items-center justify-between group hover:translate-x-2 transition-transform data-model-link"
+        >
+          <span class="text-lg">${modele.nom_modele}</span>
+          <img src="${flecheUrl.src}" alt="" class="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </a>
+      `).join('');
+
+      // Ajouter les event listeners
+      document.querySelectorAll('[data-model-link]').forEach(link => {
+        link.addEventListener('click', toggleMenu);
+      });
+    } catch (error) {
+      console.error('Erreur chargement menu:', error);
+    }
+  }
+
+  function toggleMenu() {
+    if (menuOpen) {
+      if (spans) {
+        spans[0].style.transform = 'rotate(0deg)';
+        spans[0].style.width = '36px';
+        spans[1].style.opacity = '1';
+        spans[1].style.width = '33px';
+        spans[2].style.transform = 'rotate(0deg)';
+        spans[2].style.width = '30px';
+      }
+      menuSlide?.classList.add('-translate-x-full');
+      menuOverlay?.classList.add('opacity-0', 'pointer-events-none');
+      menuOpen = false;
+    } else {
+      menuSlide?.classList.remove('-translate-x-full');
+      menuOverlay?.classList.remove('opacity-0', 'pointer-events-none');
+      
+      if (spans) {
+        spans[0].style.transform = 'rotate(45deg) translateY(5px)';
+        spans[0].style.width = '36px';
+        spans[1].style.opacity = '0';
+        spans[1].style.width = '36px';
+        spans[2].style.transform = 'rotate(-45deg) translateY(-5px)';
+        spans[2].style.width = '36px';
+      }
+      menuOpen = true;
+    }
+  }
+
+  // Charger au démarrage
+  loadMenuModels();
+
+  menuToggle?.addEventListener('click', toggleMenu);
+  menuOverlay?.addEventListener('click', toggleMenu);
+</script>

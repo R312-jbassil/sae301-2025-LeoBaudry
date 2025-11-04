@@ -1,17 +1,100 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { Picture } from 'astro:assets';
+import ModelCarousel from '../components/ModelCarousel.astro';
+import StepsSection from '../components/StepSections.astro';
 
+// Import des images
+import heroImage from '../assets/images/hero.jpg';
+import lifestyle1 from '../assets/images/lifestyle-1.jpg';
+import lifestyle2 from '../assets/images/lifestyle-2.jpg';
+import lifestyle3 from '../assets/images/lifestyle-3.jpg';
+import lifestyle4 from '../assets/images/lifestyle-4.jpg';
+import personSteps from '../assets/images/personstep.png';
 ---
 
-<Layout>
-	<h1>test1</h1>
-	<h2>TEST2</h2>
-	<h5>test5</h5>
-	<p>YOYOYO c'est le jour de la bosse</p>
-	<a href="">je suis pas encore né, mec</a>
-	<ul></ul>
-		<li>test1</li>
-		<li>test2</li>
-		<li>test3</li>
-	</ul>
+<Layout title="TAVUE - Lunettes personnalisées">
+  <!-- Hero Section : 60vh -->
+  <section class="relative h-[60vh] overflow-hidden">
+    <Picture
+      src={heroImage}
+      alt="TAVUE"
+      class="w-full h-full object-cover object-top"
+      widths={[400, 800, 1200]}
+      sizes="100vw"
+      formats={['avif', 'webp']}
+    />
+    <div class="relative z-10 flex items-center justify-center h-full">
+      <h1 class="text-9xl font-display font-bold text-white">TAVUE</h1>
+    </div>
+  </section>
+
+  <!-- Espace -->
+  <div class="h-8"></div>
+
+  <!-- Galerie 4 images -->
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+    {[lifestyle1, lifestyle2, lifestyle3, lifestyle4].map((img) => (
+      <Picture
+        src={img}
+        alt=""
+        class="w-full h-80 object-cover"
+        widths={[300, 600]}
+        sizes="(max-width: 1024px) 50vw, 25vw"
+        formats={['avif', 'webp']}
+      />
+    ))}
+  </section>
+
+  <!-- Titre (réduit) -->
+  <section class="py-12 bg-base-100">
+    <h2 class="text-center text-3xl font-display font-bold">
+      DES LUNETTES UNIQUES, POUR TOUT LE MONDE
+    </h2>
+  </section>
+
+  <!-- Carousel des modèles (6 lunettes) -->
+  <ModelCarousel />
+
+  <!-- Section 5 étapes -->
+  <StepsSection />
+
+  <!-- Section Opticien en ligne -->
+  <section class="py-20 bg-base-100">
+    <div class="container mx-auto px-4 max-w-4xl">
+      <h2 class="text-4xl font-display font-bold text-left mb-8">
+        TAVUE : VOTRE OPTICIEN EN LIGNE.
+      </h2>
+      <p class="text-left mb-6">
+        TAVUE réinvente l'achat de lunettes en le concevant sur mesure avec vous. Nous sommes une marque française qui crée
+        plutôt qu'achète des verres pré-faits.
+      </p>
+      <p class="text-left mb-12">
+        Notre philosophie repose sur un design minimaliste et épuré, soutenu par une fabrication rigoureuse et durable.
+      </p>
+
+      <h3 class="text-3xl font-display font-bold text-left mb-8">
+        L'EXPÉRIENCE DU CONFIGURATEUR
+      </h3>
+      <p class="text-left mb-4">
+        Oubliez les catalogues de milliers de montures. Nous vous proposons six modèles signature et de les personnaliser à
+        votre goût en choisissant parmi une dizaine de couleurs pour montures, branches et verres.
+      </p>
+      <ul class="list-disc list-inside space-y-2 max-w-2xl text-left">
+        <li>Choisissez votre forme parmi nos designs élégants.</li>
+        <li>Sélectionnez vos matériaux et couleurs pour montures, les branches et les verres.</li>
+        <li>Utilisez notre chatbot IA pour un accompagnement personnalisé.</li>
+      </ul>
+
+      <h3 class="text-3xl font-display font-bold text-left mb-8 mt-12">
+        LA QUALITÉ AVANT TOUT
+      </h3>
+      <p class="text-left">
+        L'excellence de la fabrication française (plastiques et traitements de haute précision, adaptables à vos besoins),
+        verres anti-reflets et progressifs incluant un traitement anti-lumière bleue si voulu, un design léger et
+        durable (à votre création).
+      </p>
+    </div>
+  </section>
+
 </Layout>

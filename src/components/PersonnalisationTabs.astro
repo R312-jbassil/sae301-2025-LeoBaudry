@@ -2,93 +2,90 @@
 import type { MateriauResponse } from '../utils/pocketbase-types';
 
 interface Props {
-  materiauxMonture: MateriauResponse[];   // Couleurs pour monture
-  materiauxVerres: MateriauResponse[];    // Couleurs pour verres
-  materiauxBranches: MateriauResponse[];  // Couleurs pour branches
+  materiauxMonture: MateriauResponse[];
+  materiauxVerres: MateriauResponse[];
+  materiauxBranches: MateriauResponse[];
 }
 
 const { materiauxMonture, materiauxVerres, materiauxBranches } = Astro.props;
 ---
 
-<div class="personnalisation-tabs">
-  <!-- Les 3 boutons d'onglets -->
-  <div role="tablist" class="flex gap-4 mb-8">
+<div class="personnalisation-container">
+  <!-- Les 3 boutons tabs -->
+  <div class="flex gap-2 md:gap-4 mb-6 md:mb-8">
     <button 
-      role="tab" 
       data-tab="monture" 
-      class="tab-btn flex-1 bg-accent text-white py-4 rounded-lg font-display text-xl"
+      class="tab-btn flex-1 py-3 md:py-4 px-4 md:px-8 rounded-lg font-display text-base md:text-xl bg-accent text-white"
     >
       Monture →
     </button>
     <button 
-      role="tab" 
       data-tab="verres" 
-      class="tab-btn flex-1 bg-secondary text-white py-4 rounded-lg font-display text-xl"
+      class="tab-btn flex-1 py-3 md:py-4 px-4 md:px-8 rounded-lg font-display text-base md:text-xl bg-secondary text-white"
     >
       Verres
     </button>
     <button 
-      role="tab" 
       data-tab="branches" 
-      class="tab-btn flex-1 bg-secondary text-white py-4 rounded-lg font-display text-xl"
+      class="tab-btn flex-1 py-3 md:py-4 px-4 md:px-8 rounded-lg font-display text-base md:text-xl bg-secondary text-white"
     >
       Branches
     </button>
   </div>
 
-  <!-- Contenu dynamique selon l'onglet actif -->
-  <div class="tab-content bg-base-200 p-8 rounded-lg">
-    <!-- Onglet Monture -->
-    <div id="monture" class="tab-panel">
-      <h3 class="text-2xl font-display mb-4">Quel style vous correspond ?</h3>
-      <div class="grid grid-cols-7 gap-4">
-        {materiauxMonture.map((materiau) => (
+  <!-- Contenu des tabs -->
+  <div class="bg-base-200 p-4 md:p-8 rounded-lg min-h-[300px] md:min-h-[400px]">
+    <!-- Tab Monture (visible par défaut, PAS de hidden) -->
+    <div id="tab-monture" class="tab-content block">
+      <h3 class="text-lg md:text-2xl font-display mb-4 md:mb-6">Quel style vous correspond ?</h3>
+      <div class="grid grid-rows-3 grid-flow-col gap-1 md:gap-4 auto-cols-max">
+        {materiauxMonture.map((mat) => (
           <button 
-            class="color-btn w-12 h-12 rounded-full border-2 border-neutral hover:scale-110 transition-transform"
-            style={`background-color: ${materiau.code_valeur}`}
-            data-materiau-id={materiau.id}
+            class="color-btn w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-neutral hover:scale-110 transition-transform"
+            style={`background-color: #${mat.code_valeur}`}
+            data-color={mat.code_valeur}
             data-partie="monture"
-            aria-label={materiau.libelle}
+            title={mat.libelle}
           />
         ))}
       </div>
     </div>
 
-    <!-- Onglet Verres -->
-    <div id="verres" class="tab-panel hidden">
-      <h3 class="text-2xl font-display mb-4">Verres "classiques"</h3>
-      <p class="text-sm mb-4">Des verres simples, facilement nettoyables...</p>
+    <!-- Tab Verres (caché) -->
+    <div id="tab-verres" class="tab-content hidden">
+      <h3 class="text-lg md:text-2xl font-display mb-3 md:mb-6">Verres "classiques"</h3>
+      <p class="text-xs md:text-sm mb-3 md:mb-4">Des verres simples, facilement nettoyables.</p>
       
-      <h4 class="text-xl font-display mt-6 mb-2">Verres anti-lumière bleue</h4>
-      <p class="text-sm mb-4">Des verres traités avec filtre...</p>
+      <h4 class="text-base md:text-xl font-display mt-6 md:mt-8 mb-2 md:mb-3">Verres anti-lumière bleue</h4>
+      <p class="text-xs md:text-sm mb-3 md:mb-4">Filtre anti-lumière bleue pour écrans.</p>
       
-      <h4 class="text-xl font-display mt-6 mb-2">Verres Teintés</h4>
-      <p class="text-sm mb-4">Pour voir la vie de toutes les couleurs !</p>
+      <h4 class="text-base md:text-xl font-display mt-6 md:mt-8 mb-2 md:mb-3">Verres Teintés</h4>
+      <p class="text-xs md:text-sm mb-4 md:mb-6">Pour voir la vie de toutes les couleurs !</p>
       
-      <div class="flex gap-4 mt-4">
-        {materiauxVerres.map((materiau) => (
+      <div class="grid grid-cols-4 md:grid-cols-8 gap-2 md:gap-4 mt-4 md:mt-6">
+        {materiauxVerres.map((mat) => (
           <button 
-            class="color-btn w-16 h-16 rounded-lg border-2"
-            style={`background-color: ${materiau.code_valeur}`}
-            data-materiau-id={materiau.id}
+            class="color-btn w-12 h-12 md:w-16 md:h-16 rounded-lg border-2 border-neutral hover:scale-110 transition-transform"
+            style={`background-color: #${mat.code_valeur}`}
+            data-color={mat.code_valeur}
             data-partie="verres"
-            aria-label={materiau.libelle}
+            title={mat.libelle}
           />
         ))}
       </div>
     </div>
 
-    <!-- Onglet Branches -->
-    <div id="branches" class="tab-panel hidden">
-      <h3 class="text-2xl font-display mb-4">Ajoutez une touche personnelle !</h3>
-      <div class="grid grid-cols-7 gap-4">
-        {materiauxBranches.map((materiau) => (
+    <!-- Tab Branches (caché) -->
+    <div id="tab-branches" class="tab-content hidden">
+      <h3 class="text-lg md:text-2xl font-display mb-4 md:mb-6">Ajoutez une touche personnelle !</h3>
+      <div class="grid grid-rows-3 grid-flow-col gap-1 md:gap-4 auto-cols-max">
+        {materiauxBranches.map((mat) => (
           <button 
-            class="color-btn w-12 h-12 rounded-full border-2 border-neutral hover:scale-110 transition-transform"
-            style={`background-color: ${materiau.code_valeur}`}
-            data-materiau-id={materiau.id}
+            class="color-btn w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-neutral hover:scale-110 transition-transform"
+            style={`background-color: #${mat.code_valeur}`}
+            data-color={mat.code_valeur}
             data-partie="branches"
-            aria-label={materiau.libelle}
+            title={mat.libelle}
           />
         ))}
       </div>
@@ -97,44 +94,73 @@ const { materiauxMonture, materiauxVerres, materiauxBranches } = Astro.props;
 </div>
 
 <script>
-  // Gestion des onglets
-  const tabButtons = document.querySelectorAll<HTMLButtonElement>('.tab-btn');
-  const tabPanels = document.querySelectorAll('.tab-panel');
+  document.addEventListener('DOMContentLoaded', () => {
+    const buttons = document.querySelectorAll('.tab-btn');
+    const contents = document.querySelectorAll('.tab-content');
 
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetTab = btn.dataset.tab;
-      
-      // Reset all tabs
-      tabButtons.forEach(b => b.classList.remove('bg-accent'));
-      tabButtons.forEach(b => b.classList.add('bg-secondary'));
-      tabPanels.forEach(p => p.classList.add('hidden'));
-      
-      // Active selected tab
-      btn.classList.remove('bg-secondary');
-      btn.classList.add('bg-accent');
-      document.getElementById(targetTab!)?.classList.remove('hidden');
-    });
-  });
-
-  // Gestion de la sélection de couleur
-  const colorButtons = document.querySelectorAll<HTMLButtonElement>('.color-btn');
-  
-  colorButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const materiauId = btn.dataset.materiauId;
-      const partie = btn.dataset.partie;
-      
-      // Modifier le SVG en temps réel (on fera ça après)
-      console.log(`Sélectionné: ${partie} avec matériau ${materiauId}`);
-      
-      // Reset selection visuelle
-      document.querySelectorAll(`[data-partie="${partie}"]`).forEach(b => {
-        b.classList.remove('ring-4', 'ring-accent');
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        const targetTab = button.getAttribute('data-tab');
+        
+        // Reset boutons
+        buttons.forEach(btn => {
+          btn.classList.remove('bg-accent');
+          btn.classList.add('bg-secondary');
+        });
+        
+        button.classList.remove('bg-secondary');
+        button.classList.add('bg-accent');
+        
+        // Cache tout
+        contents.forEach(content => {
+          content.classList.remove('block');
+          content.classList.add('hidden');
+        });
+        
+        // Affiche le bon
+        const targetContent = document.getElementById(`tab-${targetTab}`);
+        if (targetContent) {
+          targetContent.classList.remove('hidden');
+          targetContent.classList.add('block');
+        }
       });
-      
-      // Highlight selected
-      btn.classList.add('ring-4', 'ring-accent');
+    });
+
+    // Couleurs
+    const colorButtons = document.querySelectorAll('.color-btn');
+
+    colorButtons.forEach((el) => {
+      const button = el as HTMLElement;
+      button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        const color = button.dataset?.color ?? '';
+        const partie = button.dataset?.partie ?? '';
+        
+        let selector = '';
+        
+        if (partie === 'monture') {
+          selector = '#monture';
+        } else if (partie === 'verres') {
+          selector = '.verre';
+        } else if (partie === 'branches') {
+          selector = '.branche';
+        }
+        
+        const elements = selector ? document.querySelectorAll(selector) : [];
+        elements.forEach(el => {
+          if (el instanceof Element) {
+            (el as Element).setAttribute('fill', `#${color}`);
+          }
+        });
+
+        document.querySelectorAll(`[data-partie="${partie}"]`).forEach(btn => {
+          if (btn instanceof Element) {
+            btn.classList.remove('ring-4', 'ring-accent');
+          }
+        });
+        button.classList.add('ring-4', 'ring-accent');
+      });
     });
   });
 </script>

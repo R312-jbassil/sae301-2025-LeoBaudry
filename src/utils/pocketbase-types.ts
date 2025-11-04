@@ -137,6 +137,7 @@ export type ModelesRecord = {
 	nom_modele?: string
 	prix?: number
 	svg?: string
+	designation?: string
 	updated: IsoAutoDateString
 }
 

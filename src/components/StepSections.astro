@@ -1,0 +1,121 @@
+---
+import { Picture } from 'astro:assets';
+import personSteps from '../assets/images/personstep.png';
+
+const steps = [
+  { id: 1, text: "Connectez-vous ou créez un compte !" },
+  { id: 2, text: "Accédez à la page de configuration." },
+  { id: 3, text: "Choisissez votre modèle." },
+  { id: 4, text: "Modifiez votre paire comme bon vous semble !" },
+  { id: 5, text: "Commandez, et profitez !" },
+];
+---
+
+<section class="bg-secondary text-white py-6 relative">
+  <!-- Image en background à gauche -->
+  <div class="absolute left-0 top-0 w-1/2 h-full hidden lg:block overflow-hidden">
+    <Picture
+      src={personSteps}
+      alt=""
+      class="w-full h-full object-cover"
+      widths={[400, 800]}
+      formats={['avif', 'webp']}
+    />
+  </div>
+
+  <div class="container mx-auto px-4 relative">
+    <div class="flex flex-col lg:flex-row items-center justify-end gap-8 mb-8 py-12">
+      <!-- Texte poussé à droite -->
+      <div class="text-center lg:text-left w-full lg:w-1/2">
+        <h2 class="text-3xl lg:text-4xl font-display font-bold mb-4">
+          PERSONNALISEZ ET COMMANDEZ VOS LUNETTES<br />
+          COMME VOUS L'ENTENDEZ !
+        </h2>
+        <p class="text-xl">...EN 5 ÉTAPES</p>
+      </div>
+    </div>
+
+    <!-- Steps circles -->
+    <div class="flex justify-center gap-4 mb-8 lg:justify-end lg:pr-12" id="steps-container">
+      {steps.map((step) => (
+        <button
+          data-step={step.id}
+          class="step-button w-14 h-14 rounded-full border-2 border-white flex items-center justify-center text-xl font-bold transition-all cursor-pointer hover:scale-110"
+        >
+          {step.id}
+        </button>
+      ))}
+    </div>
+
+    <!-- Step description -->
+    <p class="text-center text-lg pb-8 lg:text-right lg:pr-12" id="step-description">
+      {steps[0].text}
+    </p>
+
+  </div>
+</section>
+
+
+
+
+<style>
+  .step-button {
+    transition: all 0.3s ease;
+  }
+
+  .step-button.active {
+    background-color: white;
+    color: #111111;
+    border-color: white;
+  }
+
+  .step-button.inactive {
+    background-color: transparent;
+    color: white;
+    border-color: white;
+  }
+</style>
+
+<script>
+  const steps = [
+    { id: 1, text: "Connectez-vous ou créez un compte !" },
+    { id: 2, text: "Accédez à la page de configuration." },
+    { id: 3, text: "Choisissez votre modèle." },
+    { id: 4, text: "Modifiez votre paire comme bon vous semble !" },
+    { id: 5, text: "Commandez, et profitez !" },
+  ];
+
+  const container = document.getElementById('steps-container');
+  const description = document.getElementById('step-description');
+  let currentStep = 1;
+
+  function updateSteps(activeStep: number) {
+    currentStep = activeStep;
+    
+    document.querySelectorAll('.step-button').forEach((btn) => {
+      const stepNum = parseInt(btn.getAttribute('data-step') || '0');
+      
+      if (stepNum <= activeStep) {
+        btn.classList.remove('inactive');
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+        btn.classList.add('inactive');
+      }
+    });
+
+    const stepData = steps.find(s => s.id === activeStep);
+    if (stepData && description) {
+      description.textContent = stepData.text;
+    }
+  }
+
+  container?.querySelectorAll('.step-button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const stepNum = parseInt(btn.getAttribute('data-step') || '0');
+      updateSteps(stepNum);
+    });
+  });
+
+  updateSteps(1);
+</script>
