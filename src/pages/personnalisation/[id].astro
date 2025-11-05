@@ -4,6 +4,8 @@ import PersonnalisationTabs from '../../components/PersonnalisationTabs.astro';
 import pb from '../../utils/pb';
 import flecheIcon from '../../assets/svgs/fleche1.svg';
 
+const user = (Astro.locals as any).user;
+
 const id = Astro.params.id as string | undefined;
 if (!id) {
   throw new Error('Missing model id');
@@ -33,14 +35,14 @@ const modeleId = id;
 
 <Layout title={`Personnaliser ${modele.nom_modele}`}>
   <div class="grid lg:grid-cols-3 pt-16">
-    <!-- GAUCHE : Preview SVG (1/3) -->
+    <!-- GAUCHE : Preview SVG -->
     <div class="lg:col-span-1 flex items-center justify-center p-8 lg:p-12 bg-base-200 min-h-screen">
       <div id="svg-container" class="w-full max-w-sm">
         <div set:html={modele.svg} />
       </div>
     </div>
 
-    <!-- DROITE : Options de personnalisation (2/3) -->
+    <!-- DROITE : Options de personnalisation -->
     <div class="lg:col-span-2 p-6 lg:p-16 flex flex-col">
       <h1 class="text-3xl lg:text-4xl font-display mb-2">Créez votre paire unique</h1>
       <p class="text-base-content/70 mb-8">
@@ -53,7 +55,7 @@ const modeleId = id;
         materiauxBranches={materiauxBranches}
       />
 
-      <!-- ✅ NUDGE : Aversion à la perte -->
+      <!-- NUDGE : Aversion à la perte -->
       <div class="alert alert-warning mt-6">
         <svg class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -68,16 +70,32 @@ const modeleId = id;
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
           </svg>
         </button>
-        <button id="finalize-btn" class="btn btn-accent h-12 px-8 flex items-center gap-2">
-          ✨ Sauvegarder ma création
-          <img src={flecheIcon.src} alt="" class="w-5 h-5" />
-        </button>
+
+        <!-- BOUTON AVEC CHECK UTILISATEUR -->
+        {!user ? (
+          <div class="flex flex-col items-end gap-1">
+            <button 
+              id="finalize-btn" 
+              class="btn btn-accent h-12 px-8 flex items-center gap-2 opacity-50 cursor-not-allowed"
+              disabled
+            >
+              ✨ Sauvegarder ma création
+              <img src={flecheIcon.src} alt="" class="w-5 h-5" />
+            </button>
+            <p class="text-error text-xs">🔐 Connectez-vous pour enregistrer !</p>
+          </div>
+        ) : (
+          <button id="finalize-btn" class="btn btn-accent h-12 px-8 flex items-center gap-2">
+            ✨ Sauvegarder ma création
+            <img src={flecheIcon.src} alt="" class="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       <!-- Modal de sauvegarde -->
       <dialog id="save-modal" class="modal">
         <div class="modal-box">
-          <!-- ✅ NUDGE : Effet de dotation -->
+          <!-- NUDGE : Effet de dotation -->
           <h3 class="font-bold text-lg mb-2">Donnez un nom à votre création</h3>
           <p class="text-sm text-base-content/70 mb-4">Faites de cette paire votre création personnelle.</p>
           
@@ -115,10 +133,10 @@ const modeleId = id;
   </div>
 </Layout>
 
-<script define:vars={{ modeleId }}>
+<script define:vars={{ modeleId, isLoggedIn: !!user }}>
   let hasUnsavedChanges = false;
 
-  // ✅ NUDGE : Aversion à la perte (Confirmation de sortie)
+  // NUDGE : Aversion à la perte (Confirmation de sortie)
   window.addEventListener('beforeunload', (e) => {
     if (hasUnsavedChanges) {
       e.preventDefault();
@@ -131,7 +149,7 @@ const modeleId = id;
     if (e.target.closest('[data-color]')) {
       hasUnsavedChanges = true;
       
-      // ✅ NUDGE : Feedback instantané
+      // NUDGE : Feedback instantané
       const message = document.createElement('div');
       message.className = 'toast toast-top toast-end';
       message.innerHTML = `
@@ -144,7 +162,7 @@ const modeleId = id;
     }
   });
 
-  // ===== BOUTON TÉLÉCHARGER =====
+  // BOUTON TÉLÉCHARGER
   document.getElementById('download-btn')?.addEventListener('click', () => {
     const svgContainer = document.getElementById('svg-container');
     const svgElement = svgContainer?.querySelector('svg');
@@ -166,12 +184,16 @@ const modeleId = id;
     URL.revokeObjectURL(url);
   });
 
-  // ===== BOUTON FINALISER =====
+  // BOUTON FINALISER
   document.getElementById('finalize-btn')?.addEventListener('click', () => {
+    if (!isLoggedIn) {
+      window.location.href = '/login';
+      return;
+    }
     document.getElementById('save-modal')?.showModal();
   });
 
-  // ===== APPLIQUER LES COULEURS =====
+  // APPLIQUER LES COULEURS
   function applyColorsToSVG() {
     const montureBtn = document.querySelector('[data-partie="monture"].ring-4');
     const verresBtn = document.querySelector('[data-partie="verres"].ring-4');
@@ -196,7 +218,7 @@ const modeleId = id;
     }
   }
 
-  // ===== BOUTON ENREGISTRER =====
+  // BOUTON ENREGISTRER
   document.getElementById('save-btn')?.addEventListener('click', async () => {
     const nameInput = document.getElementById('creation-name');
     const name = nameInput.value.trim();

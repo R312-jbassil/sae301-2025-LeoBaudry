@@ -2,13 +2,17 @@
 import Layout from '../../layouts/Layout.astro';
 import pb from '../../utils/pb';
 
+const user = (Astro.locals as any).user;
+
+// FILTER par utilisateur connecté
 const allCreations = await pb.collection('Creations').getFullList({
+  filter: `id_user = "${user.id}"`, 
   expand: 'id_modele,id_log_ia',
   sort: '-created',
   requestKey: null
 });
 
-// Créer les 2 listes EN ASTRO (pas en JavaScript côté client)
+// Créer les 2 listes 
 const creationsModeles = allCreations.filter(c => c.id_modele);
 const creationsIA = allCreations.filter(c => c.id_log_ia);
 
@@ -60,7 +64,6 @@ console.log('IA:', creationsIA.length);
           </section>
         )}
 
-        <!-- CRÉATIONS IA -->
         {creationsIA.length > 0 && (
           <section>
             <h2 class="text-2xl font-display mb-6 flex items-center gap-2">

@@ -8,7 +8,7 @@ export const POST = async ({ request, locals }) => {
 
     let logIaId = creation.id_log_ia;
 
-    // ===== METTRE À JOUR LOG IA SI CHAT_HISTORY =====
+    // METTRE À JOUR LOG IA SI CHAT_HISTORY
     if (chat_history && chat_history !== "[]") {
       try {
         const parsedHistory = JSON.parse(chat_history);
@@ -36,7 +36,7 @@ export const POST = async ({ request, locals }) => {
       }
     }
 
-    // ===== METTRE À JOUR LA CRÉATION =====
+    // METTRE À JOUR LA CRÉATION
     const updated = await pb.collection("Creations").update(id, {
       nom_creation: name || creation.nom_creation,
       svg: svg,
@@ -45,7 +45,7 @@ export const POST = async ({ request, locals }) => {
 
     console.log('✅ Création mise à jour:', updated.id);
 
-    // ===== METTRE À JOUR LES MATÉRIAUX SI PRÉSENTS =====
+    // METTRE À JOUR LES MATÉRIAUX SI PRÉSENTS 
     if (materiaux && Array.isArray(materiaux) && materiaux.length > 0) {
       console.log('Traitement de', materiaux.length, 'matériaux');
 
@@ -63,7 +63,7 @@ export const POST = async ({ request, locals }) => {
         try {
           const materiau = await pb.collection("Materiau").getFirstListItem(`code_valeur="${mat.code_valeur}"`);
           
-          // ✅ CONVERTIR EN MAJUSCULE CORRECTEMENT
+          // CONVERTIR EN MAJUSCULE CORRECTEMENT
           const partieCiblee = {
             'monture': 'Monture',
             'verres': 'Verres',

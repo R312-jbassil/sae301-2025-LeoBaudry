@@ -13,7 +13,7 @@ export const POST = async ({ request }) => {
 
     // Changer "En_cours" → "Validé"
     await pb.collection("Commandes").update(commandeId, {
-      statut: "Validé", // ✅ Majuscule
+      statut: "Validé", // Majuscule
     });
 
     console.log("✅ Commande validée:", commandeId);

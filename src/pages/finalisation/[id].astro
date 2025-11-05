@@ -30,7 +30,7 @@ const prix = modele?.prix || 0;
 <Layout title="Finalisation de commande">
   <div class="min-h-screen bg-base-100 pt-16 pb-12">
     <div class="container mx-auto px-4">
-      <!-- ✅ Bouton retour en haut -->
+      <!-- Bouton retour en haut -->
       <div class="mb-8 flex justify-start">
         <button 
           onclick="history.back()" 
@@ -140,7 +140,7 @@ const prix = modele?.prix || 0;
             <p class="text-xs mt-2 opacity-80">Frais de port inclus</p>
           </div>
 
-          <!-- ✅ Bouton Allons-y → Panier -->
+          <!-- Bouton Allons-y → Panier -->
           <button 
             id="add-to-cart" 
             class="btn btn-accent btn-lg w-full text-lg gap-2 rounded"
@@ -171,7 +171,7 @@ const prix = modele?.prix || 0;
 
         const result = await response.json();
         if (result.success) {
-          window.location.href = '/panier'; // ✅ Aller au panier
+          window.location.href = '/panier'; 
         } else {
           alert('Erreur : ' + result.error);
         }

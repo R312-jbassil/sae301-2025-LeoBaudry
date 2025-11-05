@@ -64,7 +64,7 @@ import Layout from '../layouts/Layout.astro';
 <script>
     let promptList: { role: string; content: any; }[] = [];
 
-    // ===== GÉNÉRER =====
+    // GÉNÉRER 
     async function generateSVG(messages: any[]) {
       const res = await fetch('/api/generateSVG', {
         method: 'POST',
@@ -76,7 +76,6 @@ import Layout from '../layouts/Layout.astro';
       return data.svg;
     }
 
-    // ===== HANDLE GENERATE =====
     async function handleGenerate() {
       const promptElement = document.getElementById('user-prompt') as HTMLTextAreaElement | null;
       const generateButton = document.getElementById('generate-button') as HTMLButtonElement | null;
@@ -125,8 +124,7 @@ import Layout from '../layouts/Layout.astro';
         loadingDiv.classList.add('hidden');
       }
     }
-
-    // ===== HANDLE EDIT =====
+ 
         async function handleEdit() {
           const promptElement = document.getElementById('user-prompt') as HTMLTextAreaElement | null;
           const generateButton = document.getElementById('generate-button') as HTMLButtonElement | null;
@@ -181,12 +179,11 @@ import Layout from '../layouts/Layout.astro';
           }
         }
 
-    // ===== SAUVEGARDER =====
+    // SAUVEGARDER 
     async function saveSVGCreation() {
       const nameInput = document.getElementById('svg-name') as HTMLInputElement | null;
       const svgOutput = document.getElementById('svg-output') as HTMLElement | null;
 
-      // Ensure elements exist before accessing their properties
       if (!nameInput || !svgOutput) {
         alert('Élément de la page introuvable. Veuillez recharger la page.');
         return;
@@ -234,7 +231,7 @@ import Layout from '../layouts/Layout.astro';
       }
     }
 
-    // ===== EVENT LISTENERS =====
+    // EVENT LISTENERS 
     document.getElementById('generate-button')?.addEventListener('click', handleGenerate);
     document.getElementById('edit-button')?.addEventListener('click', handleEdit);
     document.getElementById('save-svg')?.addEventListener('click', saveSVGCreation);

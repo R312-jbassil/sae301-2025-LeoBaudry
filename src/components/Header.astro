@@ -5,24 +5,28 @@ import panierIcon from '../assets/svgs/panier.svg';
 import flecheIcon from '../assets/svgs/fleche1.svg';
 import pb from '../utils/pb';
 
-// Récupérer le nombre d'articles en panier
+const user = (Astro.locals as any).user;
+
+// Récupérer le nombre d'articles en panier (si connecté)
 let cartCount = 0;
-try {
-  const commandes = await pb.collection('Commandes').getFullList({
-    filter: `statut = "En_cours"`,
-    requestKey: null
-  });
-  
-  if (commandes.length > 0) {
-    const lastCommande = commandes[commandes.length - 1];
-    const lignes = await pb.collection('Lignes_commande').getFullList({
-      filter: `id_commandes = "${lastCommande.id}"`,
+if (user) {
+  try {
+    const commandes = await pb.collection('Commandes').getFullList({
+      filter: `statut = "En_cours" && id_user = "${user.id}"`,
       requestKey: null
     });
-    cartCount = lignes.length;
+    
+    if (commandes.length > 0) {
+      const lastCommande = commandes[commandes.length - 1];
+      const lignes = await pb.collection('Lignes_commande').getFullList({
+        filter: `id_commandes = "${lastCommande.id}"`,
+        requestKey: null
+      });
+      cartCount = lignes.length;
+    }
+  } catch (err) {
+    console.log('Erreur récupération panier:', err);
   }
-} catch (err) {
-  console.log('Erreur récupération panier:', err);
 }
 ---
 
@@ -50,37 +54,105 @@ try {
           <button class="text-neutral hover:text-base-content">EN</button>
         </div>
 
-        <!-- User -->
-        <a href="/login" aria-label="Mon compte">
-          <img src={userIcon.src} alt="Compte" class="w-6 h-6" />
-        </a>
+        <!-- Panier avec badge (seulement connecté) -->
+        {user && (
+          <a href="/panier" aria-label="Panier" class="relative">
+            <img src={panierIcon.src} alt="Panier" class="w-6 h-6" />
+            {cartCount > 0 && (
+              <span class="absolute -top-2 -right-2 bg-accent text-accent-content text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
+          </a>
+        )}
 
-        <!-- Panier avec badge -->
-        <a href="/panier" aria-label="Panier" class="relative">
-          <img src={panierIcon.src} alt="Panier" class="w-6 h-6" />
-          {cartCount > 0 && (
-            <span class="absolute -top-2 -right-2 bg-accent text-accent-content text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-              {cartCount}
-            </span>
-          )}
-        </a>
+        <!-- User Icon (Login/User menu) -->
+        {!user ? (
+          <a href="/login" aria-label="Se connecter">
+            <img src={userIcon.src} alt="Connexion" class="w-6 h-6 hover:opacity-70 transition" />
+          </a>
+        ) : (
+          <button id="user-menu-btn" aria-label="Menu utilisateur" class="hover:opacity-70 transition">
+            <img src={userIcon.src} alt="Menu" class="w-6 h-6" />
+          </button>
+        )}
       </div>
     </div>
   </div>
 </header>
 
-<!-- Menu slide -->
+<!-- Menu dépliant (gauche) -->
 <div id="menu-slide" class="fixed top-0 left-0 h-full w-80 bg-base-100 shadow-2xl z-70 transform -translate-x-full transition-transform duration-300 ease-in-out">
   <div class="p-8 pt-20">
-    <h2 class="text-2xl font-display font-bold mb-8">Nos modèles à personnaliser</h2>
-    <nav class="space-y-4" id="menu-nav">
+    <!-- ✅ MODÈLES À PERSONNALISER -->
+    <h2 class="text-2xl font-display font-bold mb-8">Nos modèles</h2>
+    <nav class="space-y-4 mb-12" id="menu-nav">
       <!-- Chargé dynamiquement -->
     </nav>
+
+    <!-- ✅ MENU UTILISATEUR (si connecté) -->
+    {user && (
+      <>
+        <div class="divider"></div>
+        <h3 class="text-lg font-display mb-4">Mon compte</h3>
+        <nav class="space-y-3 text-sm">
+          <a 
+            href="/creations" 
+            class="flex items-center gap-2 hover:text-accent transition"
+            onclick="document.getElementById('menu-toggle').click()"
+          >
+            📁 Ma collection
+          </a>
+          <a 
+            href="/panier" 
+            class="flex items-center gap-2 hover:text-accent transition"
+            onclick="document.getElementById('menu-toggle').click()"
+          >
+            🛒 Mon panier {cartCount > 0 && <span class="badge badge-accent">{cartCount}</span>}
+          </a>
+          <a 
+            href="/assistant-ai" 
+            class="flex items-center gap-2 hover:text-accent transition"
+            onclick="document.getElementById('menu-toggle').click()"
+          >
+            🤖 Assistant IA
+          </a>
+          <a 
+            href="/commandes" 
+            class="flex items-center gap-2 hover:text-accent transition"
+            onclick="document.getElementById('menu-toggle').click()"
+          >
+            📦 Mes commandes
+          </a>
+          <button 
+            id="logout-btn-menu"
+            class="flex items-center gap-2 hover:text-error transition w-full mt-4"
+          >
+            🚪 Se déconnecter
+          </button>
+        </nav>
+      </>
+    )}
   </div>
 </div>
 
 <!-- Overlay -->
 <div id="menu-overlay" class="fixed inset-0 bg-black/50 z-65 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+<!-- Modal user menu (desktop) -->
+{user && (
+  <div id="user-menu-modal" class="fixed top-16 right-4 hidden">
+    <div class="bg-base-100 rounded shadow-lg border border-base-300">
+      <a href="/creations" class="block px-4 py-2 hover:bg-base-200">📁 Ma collection</a>
+      <a href="/assistant-ai" class="block px-4 py-2 hover:bg-base-200">🤖 Assistant IA</a>
+      <a href="/commandes" class="block px-4 py-2 hover:bg-base-200">📦 Mes commandes</a>
+      <hr class="my-2" />
+      <button id="logout-btn-desktop" class="block w-full text-left px-4 py-2 hover:bg-error/10 text-error">
+        🚪 Déconnecter
+      </button>
+    </div>
+  </div>
+)}
 
 <script>
   import pb from '../utils/pb';
@@ -91,10 +163,14 @@ try {
   const menuOverlay = document.getElementById('menu-overlay');
   const menuNav = document.getElementById('menu-nav');
   const spans = menuToggle?.querySelectorAll('span');
+  const userMenuBtn = document.getElementById('user-menu-btn');
+  const userMenuModal = document.getElementById('user-menu-modal');
+  const logoutBtnMenu = document.getElementById('logout-btn-menu');
+  const logoutBtnDesktop = document.getElementById('logout-btn-desktop');
 
   let menuOpen = false;
 
-  // Charger les modèles dynamiquement
+  // Charger les modèles
   async function loadMenuModels() {
     try {
       const modeles = await pb.collection('Modeles').getFullList({
@@ -111,7 +187,6 @@ try {
         </a>
       `).join('');
 
-      // Ajouter les event listeners
       document.querySelectorAll('[data-model-link]').forEach(link => {
         link.addEventListener('click', toggleMenu);
       });
@@ -149,10 +224,25 @@ try {
     }
   }
 
-  // Charger au démarrage
-  loadMenuModels();
+  // Toggle user menu (desktop)
+  userMenuBtn?.addEventListener('click', () => {
+    userMenuModal?.classList.toggle('hidden');
+  });
 
+  // Logout
+  async function handleLogout() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Erreur logout:', err);
+    }
+  }
+
+  logoutBtnMenu?.addEventListener('click', handleLogout);
+  logoutBtnDesktop?.addEventListener('click', handleLogout);
+
+  loadMenuModels();
   menuToggle?.addEventListener('click', toggleMenu);
   menuOverlay?.addEventListener('click', toggleMenu);
 </script>
-

@@ -64,7 +64,7 @@ const prixBase = isModele ? (creation.expand?.id_modele?.prix || 50) : 0;
 
 <Layout title={creation.nom_creation}>
   <div class="container mx-auto px-4 py-16">
-    <!-- ✅ Bouton retour en haut -->
+    <!-- Bouton retour en haut -->
     <div class="mb-8 flex justify-start">
     <a 
         href="/creations" 
@@ -77,7 +77,7 @@ const prixBase = isModele ? (creation.expand?.id_modele?.prix || 50) : 0;
     </a>
     </div>
 
-    <!-- ✅ Titre centré -->
+    <!-- Titre centré -->
     <h1 class="text-4xl font-display text-center mb-8">{creation.nom_creation}</h1>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -173,7 +173,7 @@ const prixBase = isModele ? (creation.expand?.id_modele?.prix || 50) : 0;
     creationId: id,
     chatHistoryJson: JSON.stringify(chatHistory)
   }}>
-    // ===== TÉLÉCHARGER SVG =====
+    // TÉLÉCHARGER SVG
     document.getElementById('download-svg')?.addEventListener('click', () => {
       const svgContainer = document.getElementById('svg-container');
       const svgElement = svgContainer?.querySelector('svg');
@@ -190,12 +190,12 @@ const prixBase = isModele ? (creation.expand?.id_modele?.prix || 50) : 0;
       URL.revokeObjectURL(url);
     });
 
-    // ===== FINALISER COMMANDE =====
+    // FINALISER COMMANDE
     document.getElementById('finalize-btn')?.addEventListener('click', () => {
       window.location.href = `/finalisation/${creationId}`;
     });
 
-    // ===== SAUVEGARDER MODIFICATIONS (Modèle) =====
+    // SAUVEGARDER MODIFICATIONS (Modèle)
     if (isModele) {
       document.getElementById('save-modifications')?.addEventListener('click', async () => {
         // Appliquer les couleurs au SVG
@@ -253,7 +253,7 @@ const prixBase = isModele ? (creation.expand?.id_modele?.prix || 50) : 0;
       });
     }
 
-    // ===== MODIFIER AVEC IA =====
+    // MODIFIER AVEC IA
     if (isIA) {
       document.getElementById('modify-with-ai')?.addEventListener('click', async () => {
         const promptElement = document.getElementById('ai-modify-prompt');

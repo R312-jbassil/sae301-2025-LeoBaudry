@@ -1,0 +1,135 @@
+---
+import Layout from '../layouts/Layout.astro';
+import pb from '../utils/pb';
+
+const user = (Astro.locals as any).user;
+
+let commandes: any[] = [];
+
+if (user) {
+  try {
+    // RÉCUPÉRER TOUTES LES COMMANDES DE L'UTILISATEUR
+    commandes = await pb.collection('Commandes').getFullList({
+      filter: `id_user = "${user.id}"`, // ← FILTER PAR USER
+      sort: '-date_commande',
+      requestKey: null
+    });
+
+    // Enrichir avec les lignes
+    for (const cmd of commandes) {
+      const lignes: any[] = await pb.collection('Lignes_commande').getFullList({
+        filter: `id_commandes = "${cmd.id}"`,
+        expand: 'id_creation,id_creation.id_modele',
+        requestKey: null
+      });
+      
+      cmd.lignes = lignes;
+      cmd.total = lignes.reduce((sum, l: any) => {
+        const prix = l.expand?.id_creation?.expand?.id_modele?.prix || 0;
+        return sum + (prix * l.quantite);
+      }, 0);
+    }
+  } catch (err) {
+    console.log('Erreur récupération commandes:', err);
+  }
+}
+---
+
+<Layout title="Mes commandes">
+  <div class="container mx-auto px-4 py-16">
+    <!-- Bouton retour -->
+    <div class="mb-8 flex justify-start">
+      <button 
+        onclick="history.back()" 
+        class="flex items-center gap-2 text-base-content/70 hover:text-base-content transition"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Retour
+      </button>
+    </div>
+
+    <h1 class="text-4xl font-display mb-8">Mes commandes</h1>
+
+    {commandes.length === 0 ? (
+      <div class="text-center py-12 bg-base-200 rounded-lg">
+        <p class="text-xl text-base-content/60 mb-4">Aucune commande pour l'instant</p>
+        <a href="/creations" class="btn btn-accent">Continuer le shopping</a>
+      </div>
+    ) : (
+      <div class="space-y-6">
+        {commandes.map((cmd) => (
+          <div class="card bg-base-100 border border-base-300">
+            <div class="card-body">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="card-title text-lg">
+                    Commande #{cmd.id.substring(0, 8).toUpperCase()}
+                  </h3>
+                  <p class="text-sm text-base-content/60">
+                    {new Date(cmd.date_commande).toLocaleDateString('fr-FR', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+                
+                <!-- Statut -->
+                <div class="badge badge-lg" data-status={cmd.statut}>
+                  {cmd.statut === 'En_cours' && '🕐 En cours'}
+                  {cmd.statut === 'Validé' && '✅ Validée'}
+                  {cmd.statut === 'Expédié' && '🚚 Expédiée'}
+                </div>
+              </div>
+
+              <div class="divider my-2"></div>
+              
+              <div class="space-y-3 mb-4">
+                {cmd.lignes.map((ligne: { expand: { id_creation: { svg: unknown; nom_creation: unknown; expand: { id_modele: { nom_modele: unknown; prix: any; }; }; }; }; quantite: unknown; }) => (
+                  <div class="flex items-center justify-between py-2">
+                    <div class="flex items-center gap-3 flex-1">
+                      <div class="w-50 h-50 bg-base-200 rounded flex items-center justify-center overflow-hidden">
+                        <div class="w-full h-full flex items-center justify-center scale-50 origin-center" set:html={ligne.expand?.id_creation?.svg} />
+                    </div>
+
+                      <div class="flex-1">
+                        <p class="font-semibold">{ligne.expand?.id_creation?.nom_creation}</p>
+                        <p class="text-xs text-base-content/60">
+                          {ligne.expand?.id_creation?.expand?.id_modele?.nom_modele}
+                        </p>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <p class="font-bold">
+                        {(ligne.expand?.id_creation?.expand?.id_modele?.prix || 0).toFixed(2)}€
+                      </p>
+                      <p class="text-xs text-base-content/60">Qty: {ligne.quantite}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <!-- Total -->
+              <div class="divider my-2"></div>
+              
+              <div class="flex justify-between items-center">
+                <span class="text-lg font-bold">Total:</span>
+                <span class="text-2xl font-bold text-accent">{cmd.total.toFixed(2)}€</span>
+              </div>
+
+              <!-- Détails -->
+              <div class="mt-4 flex gap-2">
+                <a href={`/creations/${cmd.lignes[0]?.id_creation}`} class="btn btn-sm btn-ghost">
+                  Voir détails →
+                </a>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+</Layout>

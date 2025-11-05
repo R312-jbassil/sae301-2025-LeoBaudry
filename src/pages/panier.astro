@@ -2,53 +2,38 @@
 import Layout from '../layouts/Layout.astro';
 import pb from '../utils/pb';
 
+const user = (Astro.locals as any).user;
+
 let commande: any = null;
 let lignesCommande: any[] = [];
 let prixTotal = 0;
-let debugMsg = "";
 
-try {
-  console.log('=== PANIER DEBUG ===');
-  
-  // Récupérer TOUTES les commandes "En_cours" pour voir
-  const toutesCommandes = await pb.collection('Commandes').getFullList({
-    filter: `statut = "En_cours"`,
-    requestKey: null
-  });
-  
-  console.log('Commandes En_cours trouvées:', toutesCommandes.length);
-  toutesCommandes.forEach(c => console.log('  -', c.id, c.date_commande));
-  
-  // Prendre la première (la plus récente devrait être la dernière)
-  if (toutesCommandes.length > 0) {
-    commande = toutesCommandes[toutesCommandes.length - 1]; // Dernière = plus récente
-    console.log('✅ Commande sélectionnée:', commande.id);
-
-    lignesCommande = await pb.collection('Lignes_commande').getFullList({
-      filter: `id_commandes = "${commande.id}"`,
-      expand: 'id_creation,id_creation.id_modele',
+if (user) {
+  try {
+    // FILTER PAR USER
+    const commandes = await pb.collection('Commandes').getFullList({
+      filter: `statut = "En_cours" && id_user = "${user.id}"`, 
       requestKey: null
     });
+    
+    if (commandes.length > 0) {
+      commande = commandes[commandes.length - 1];
+      
+      lignesCommande = await pb.collection('Lignes_commande').getFullList({
+        filter: `id_commandes = "${commande.id}"`,
+        expand: 'id_creation,id_creation.id_modele',
+        requestKey: null
+      });
 
-    console.log('Lignes trouvées:', lignesCommande.length);
-
-    // Calculer le prix total
-    prixTotal = lignesCommande.reduce((total, ligne) => {
-      const prix = ligne.expand?.id_creation?.expand?.id_modele?.prix || 0;
-      console.log('  - Création:', ligne.expand?.id_creation?.nom_creation, 'Prix:', prix);
-      return total + (prix * ligne.quantite);
-    }, 0);
-
-    debugMsg = `✅ ${lignesCommande.length} articles trouvés`;
-  } else {
-    debugMsg = "❌ Aucune commande En_cours";
+      prixTotal = lignesCommande.reduce((total, ligne) => {
+        const prix = ligne.expand?.id_creation?.expand?.id_modele?.prix || 0;
+        return total + (prix * ligne.quantite);
+      }, 0);
+    }
+  } catch (err) {
+    console.log('Erreur récupération panier:', err);
   }
-} catch (err) {
-  console.log('❌ Erreur panier:', err.message);
-  debugMsg = `Erreur: ${err.message}`;
 }
-
-console.log('=== FIN DEBUG ===');
 ---
 
 <Layout title="Mon Panier">
@@ -72,7 +57,7 @@ console.log('=== FIN DEBUG ===');
     {lignesCommande.length === 0 ? (
       <div class="text-center py-12">
         <p class="text-xl text-base-content/60 mb-6">Votre panier est vide</p>
-        <a href="/" class="btn btn-accent">Retour à l'accueil</a>
+        <a href="/creations" class="btn btn-accent">Retour à ma collection</a>
       </div>
     ) : (
       <div class="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -153,27 +138,41 @@ console.log('=== FIN DEBUG ===');
   </div>
 
   <script define:vars={{ commandeId: commande?.id }}>
-    // Retirer un article
-    document.querySelectorAll('[id^="remove-"]').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const ligneId = e.target.dataset.ligneId;
-        
-        try {
-          const response = await fetch('/api/removeFromCart', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ligneId })
-          });
+// ===== RETIRER UN ARTICLE =====
+document.querySelectorAll('[id^="remove-"]').forEach(btn => {
+  btn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    
+    // ✅ CORRIGER : utiliser le bon data attribute
+    const ligneId = btn.dataset.ligneId || e.target.closest('[data-ligne-id]')?.dataset.ligneId;
+    
+    console.log('🗑 Retrait ligne:', ligneId);
+    
+    if (!ligneId) {
+      alert('Erreur: ID ligne non trouvé');
+      return;
+    }
 
-          const result = await response.json();
-          if (result.success) {
-            location.reload();
-          }
-        } catch (err) {
-          alert('Erreur lors du retrait');
-        }
+    try {
+      const response = await fetch('/api/removeFromCart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ligneId })
       });
-    });
+
+      const result = await response.json();
+      if (result.success) {
+        location.reload();
+      } else {
+        alert('Erreur:', result.error);
+      }
+    } catch (err) {
+      console.error('Erreur retrait:', err);
+      alert('Erreur lors du retrait');
+    }
+  });
+});
+
 
     // Valider la commande
     document.getElementById('validate-order')?.addEventListener('click', async () => {

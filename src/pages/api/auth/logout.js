@@ -1,11 +1,15 @@
-// import pb from "../../../utils/pb";
+import pb from "../../../utils/pb";
 
-// export const POST = async ({ cookies }) => {
-//   pb.authStore.clear();
-//   cookies.delete("pb_auth", { path: "/" });
+export const POST = async ({ cookies }) => {
+  console.log('🚪 Logout...');
   
-//   return new Response(null, { 
-//     status: 303, 
-//     headers: { Location: '/' } 
-//   });
-// };
+  pb.authStore.clear();
+  cookies.delete("pb_auth", { path: "/" });
+  
+  console.log('✅ Logout réussi');
+  
+  return new Response(
+    JSON.stringify({ success: true }), 
+    { status: 200, headers: { "Content-Type": "application/json" } }
+  );
+};

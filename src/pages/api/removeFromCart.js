@@ -11,8 +11,25 @@ export const POST = async ({ request }) => {
       );
     }
 
+    // RÉCUPÉRER la ligne pour connaître la commande
+    const ligne = await pb.collection("Lignes_commande").getOne(ligneId);
+    const commandeId = ligne.id_commandes;
+
+    // Supprimer la ligne
     await pb.collection("Lignes_commande").delete(ligneId);
     console.log("✅ Article retiré du panier");
+
+    // VÉRIFIER SI LA COMMANDE EST VIDE
+    const lignesRestantes = await pb.collection("Lignes_commande").getFullList({
+      filter: `id_commandes = "${commandeId}"`,
+      requestKey: null
+    });
+
+    // Si aucune ligne, supprimer la commande
+    if (lignesRestantes.length === 0) {
+      await pb.collection("Commandes").delete(commandeId);
+      console.log("✅ Commande vide supprimée:", commandeId);
+    }
 
     return new Response(
       JSON.stringify({ success: true }),

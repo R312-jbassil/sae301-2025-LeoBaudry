@@ -1,11 +1,21 @@
 import pb from "../../utils/pb";
 
-export const POST = async ({ request }) => {
+export const POST = async ({ request, locals }) => {
   try {
     const { creationId } = await request.json();
+    const user = locals?.user;
 
     console.log('=== ADD TO CART ===');
     console.log('creationId:', creationId);
+    console.log('User:', user?.id);
+
+    // VÉRIFIER USER
+    if (!user) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Utilisateur non connecté" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     if (!creationId) {
       return new Response(
@@ -14,11 +24,11 @@ export const POST = async ({ request }) => {
       );
     }
 
-    // Chercher une commande "En_cours" (majuscule!)
+    // CHERCHER LA COMMANDE EN COURS POUR CET UTILISATEUR
     let commande;
     try {
       commande = await pb.collection("Commandes").getFirstListItem(
-        `statut = "En_cours"`, // ✅ E majuscule + underscore
+        `statut = "En_cours" && id_user = "${user.id}"`,
         { requestKey: null }
       );
       console.log('✅ Commande en cours trouvée:', commande.id);
@@ -27,7 +37,8 @@ export const POST = async ({ request }) => {
       
       commande = await pb.collection("Commandes").create({
         date_commande: new Date().toISOString(),
-        statut: "En_cours", // ✅ E majuscule + underscore
+        statut: "En_cours",
+        id_user: user.id, // ← AJOUTER L'UTILISATEUR
       });
       console.log('✅ Nouvelle commande créée:', commande.id);
     }
@@ -46,13 +57,8 @@ export const POST = async ({ request }) => {
     );
   } catch (err) {
     console.error("❌ Erreur addToCart:", err.message);
-    console.error("Détails:", err.data);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: err.message,
-        details: err.data 
-      }),
+      JSON.stringify({ success: false, error: err.message }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
