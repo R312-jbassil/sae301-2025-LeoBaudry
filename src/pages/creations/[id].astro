@@ -1,0 +1,298 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PersonnalisationTabs from '../../components/PersonnalisationTabs.astro';
+import pb from '../../utils/pb';
+import type { MateriauResponse } from '../../utils/pocketbase-types';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/creations');
+}
+
+const creation: any = await pb.collection('Creations').getOne(id, {
+  expand: 'id_modele,id_log_ia',
+  requestKey: null
+});
+
+// Récupérer les matériaux existants si création avec modèle
+let materiauxChoisis = [];
+if (creation.id_modele) {
+  materiauxChoisis = await pb.collection('Choisir').getFullList({
+    filter: `id_creation="${id}"`,
+    expand: 'id_materiau',
+    requestKey: null
+  });
+}
+
+// Récupérer tous les matériaux pour la personnalisation
+let materiauxMonture: MateriauResponse[] = [];
+let materiauxVerres: MateriauResponse[] = [];
+let materiauxBranches: MateriauResponse[] = [];
+
+if (creation.id_modele) {
+  materiauxMonture = await pb.collection('Materiau').getFullList({
+    filter: 'type_cible ~ "Monture"',
+    requestKey: null
+  });
+  materiauxVerres = await pb.collection('Materiau').getFullList({
+    filter: 'type_cible ~ "Verres"',
+    requestKey: null
+  });
+  materiauxBranches = await pb.collection('Materiau').getFullList({
+    filter: 'type_cible ~ "Branches"',
+    requestKey: null
+  });
+}
+
+// Récupérer l'historique IA si présent
+let chatHistory = [];
+if (creation.expand?.id_log_ia?.reponse_ia) {
+  try {
+    chatHistory = JSON.parse(creation.expand.id_log_ia.reponse_ia);
+  } catch (err) {
+    console.log('Erreur parsing chat history:', err);
+  }
+}
+
+const isIA = !!creation.id_log_ia;
+const isModele = !!creation.id_modele;
+
+// Prix pour créations avec modèle
+const prixBase = isModele ? (creation.expand?.id_modele?.prix || 50) : 0;
+---
+
+<Layout title={creation.nom_creation}>
+  <div class="container mx-auto px-4 py-16">
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-4xl font-display">{creation.nom_creation}</h1>
+      <a href="/creations" class="btn btn-secondary">← Retour</a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- GAUCHE : SVG Preview -->
+      <div class="card bg-base-100 shadow-xl p-8 sticky top-4">
+        <div class="flex justify-center items-center bg-base-200 rounded-lg p-8 min-h-[400px]">
+          <div id="svg-container" class="w-full max-w-md" set:html={creation.svg} />
+        </div>
+
+        {isModele && (
+          <div class="mt-6 p-4 bg-accent/10 rounded-lg">
+            <p class="text-sm text-base-content/60">Prix estimé</p>
+            <p class="text-3xl font-bold">{prixBase}€</p>
+          </div>
+        )}
+
+        <div class="mt-6 flex gap-2">
+          <button id="download-svg" class="btn btn-outline flex-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Télécharger
+          </button>
+          <button id="finalize-btn" class="btn btn-accent flex-1">
+            Finaliser la commande →
+          </button>
+        </div>
+      </div>
+
+      <!-- DROITE : Edition -->
+      <div class="flex flex-col gap-6">
+        {/* CRÉATION AVEC MODÈLE - Personnalisation couleurs */}
+        {isModele && (
+          <div class="card bg-base-100 shadow-xl p-6">
+            <h2 class="text-2xl font-display mb-4">Personnaliser les couleurs</h2>
+            <PersonnalisationTabs 
+              materiauxMonture={materiauxMonture}
+              materiauxVerres={materiauxVerres}
+              materiauxBranches={materiauxBranches}
+            />
+            <button id="save-modifications" class="btn btn-primary mt-4 w-full">
+              Enregistrer les modifications
+            </button>
+          </div>
+        )}
+
+        {/* CRÉATION IA - Historique et modification */}
+        {isIA && (
+          <>
+            <div class="card bg-base-100 shadow-xl p-6">
+              <h2 class="text-2xl font-display mb-4">Modifier avec l'IA</h2>
+              <textarea
+                id="ai-modify-prompt"
+                class="textarea textarea-bordered w-full h-24"
+                placeholder="Ex: Rends les verres plus ronds, change la couleur en bleu..."
+              ></textarea>
+              <button id="modify-with-ai" class="btn btn-secondary mt-4 w-full">
+                Modifier avec l'IA
+              </button>
+            </div>
+
+            <div class="card bg-base-100 shadow-xl p-6">
+              <h2 class="text-2xl font-display mb-4">Historique de création</h2>
+              <div class="space-y-3 max-h-96 overflow-y-auto">
+                {chatHistory.map((msg: { role: string; content: unknown; }, i: any) => (
+                  <div class={`p-4 rounded-lg ${msg.role === 'user' ? 'bg-accent/20' : 'bg-secondary/20'}`}>
+                    <p class="text-xs font-bold uppercase mb-2 opacity-70">
+                      {msg.role === 'user' ? '👤 Vous' : '🤖 IA'}
+                    </p>
+                    {msg.role === 'user' ? (
+                      <p class="text-sm">{typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)}</p>
+                    ) : (
+                      <details class="text-sm">
+                        <summary class="cursor-pointer font-semibold">Voir le code SVG</summary>
+                        <pre class="mt-2 text-xs bg-base-300 p-2 rounded overflow-auto max-h-32">{(typeof msg.content === 'string' ? msg.content.substring(0, 500) : JSON.stringify(msg.content).substring(0, 500))}...</pre>
+                      </details>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <script define:vars={{ 
+    svg: creation.svg, 
+    name: creation.nom_creation, 
+    isModele, 
+    isIA, 
+    creationId: id,
+    chatHistoryJson: JSON.stringify(chatHistory)
+  }}>
+    // ===== TÉLÉCHARGER SVG =====
+    document.getElementById('download-svg')?.addEventListener('click', () => {
+      const svgContainer = document.getElementById('svg-container');
+      const svgElement = svgContainer?.querySelector('svg');
+      const svgContent = svgElement?.outerHTML || svg;
+      
+      const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${name}.svg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // ===== FINALISER COMMANDE =====
+    document.getElementById('finalize-btn')?.addEventListener('click', () => {
+      alert('Fonctionnalité de commande à venir !');
+      // TODO: Rediriger vers page de commande
+    });
+
+    // ===== SAUVEGARDER MODIFICATIONS (Modèle) =====
+    if (isModele) {
+      document.getElementById('save-modifications')?.addEventListener('click', async () => {
+        // Appliquer les couleurs au SVG
+        const montureBtn = document.querySelector('[data-partie="monture"].ring-4');
+        const verresBtn = document.querySelector('[data-partie="verres"].ring-4');
+        const branchesBtn = document.querySelector('[data-partie="branches"].ring-4');
+
+        if (montureBtn) {
+          document.querySelectorAll('#monture, .monture').forEach(el => {
+            el.setAttribute('fill', `#${montureBtn.dataset.color}`);
+          });
+        }
+        if (verresBtn) {
+          document.querySelectorAll('#verre-gauche, #verre-droit, .verre').forEach(el => {
+            el.setAttribute('fill', `#${verresBtn.dataset.color}`);
+          });
+        }
+        if (branchesBtn) {
+          document.querySelectorAll('#branche-gauche, #branche-droite, .branche').forEach(el => {
+            el.setAttribute('fill', `#${branchesBtn.dataset.color}`);
+          });
+        }
+
+        const svgContainer = document.getElementById('svg-container');
+        const svgElement = svgContainer?.querySelector('svg');
+        const updatedSvg = svgElement?.outerHTML;
+
+        const materiaux = [];
+        if (montureBtn) materiaux.push({ code_valeur: montureBtn.dataset.color, partie_ciblee: 'monture' });
+        if (verresBtn) materiaux.push({ code_valeur: verresBtn.dataset.color, partie_ciblee: 'verres' });
+        if (branchesBtn) materiaux.push({ code_valeur: branchesBtn.dataset.color, partie_ciblee: 'branches' });
+
+        try {
+          const response = await fetch('/api/updateSVG', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: creationId,
+              svg: updatedSvg,
+              materiaux
+            })
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            alert('Modifications enregistrées !');
+            location.reload();
+          } else {
+            alert('Erreur : ' + result.error);
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Erreur lors de la sauvegarde');
+        }
+      });
+    }
+
+    // ===== MODIFIER AVEC IA =====
+    if (isIA) {
+      document.getElementById('modify-with-ai')?.addEventListener('click', async () => {
+        const promptElement = document.getElementById('ai-modify-prompt');
+        const prompt = promptElement.value.trim();
+
+        if (!prompt) {
+          alert('Veuillez décrire vos modifications');
+          return;
+        }
+
+        try {
+          const chatHistory = JSON.parse(chatHistoryJson);
+          chatHistory.push({ role: 'user', content: prompt });
+
+          const response = await fetch('/api/generateSVG', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: chatHistory })
+          });
+
+          const data = await response.json();
+          const newSvg = data.svg;
+
+          chatHistory.push({ role: 'assistant', content: newSvg });
+
+          // Mettre à jour l'affichage
+          document.getElementById('svg-container').innerHTML = newSvg;
+
+          // Sauvegarder
+          const updateResponse = await fetch('/api/updateSVG', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: creationId,
+              svg: newSvg,
+              chat_history: JSON.stringify(chatHistory)
+            })
+          });
+
+          const updateResult = await updateResponse.json();
+          if (updateResult.success) {
+            alert('Modification appliquée !');
+            location.reload();
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Erreur lors de la modification');
+        }
+      });
+    }
+  </script>
+</Layout>

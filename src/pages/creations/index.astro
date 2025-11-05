@@ -1,0 +1,93 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import pb from '../../utils/pb';
+
+const allCreations = await pb.collection('Creations').getFullList({
+  expand: 'id_modele,id_log_ia',
+  sort: '-created',
+  requestKey: null
+});
+
+// Créer les 2 listes EN ASTRO (pas en JavaScript côté client)
+const creationsModeles = allCreations.filter(c => c.id_modele);
+const creationsIA = allCreations.filter(c => c.id_log_ia);
+
+const total = allCreations.length;
+
+console.log('Total:', total);
+console.log('Modèles:', creationsModeles.length);
+console.log('IA:', creationsIA.length);
+---
+
+<Layout title="Mes créations - TAVUE">
+  <div class="container mx-auto px-4 py-16">
+    <h1 class="text-4xl font-display mb-2">Créations</h1>
+    <p class="text-base-content/70 mb-8">Total: {total} création{total !== 1 ? 's' : ''}</p>
+
+    {total === 0 ? (
+      <div class="text-center py-12 bg-base-200 rounded-lg">
+        <p class="text-xl">Aucune création pour l'instant</p>
+      </div>
+    ) : (
+      <div class="space-y-12">
+        <!-- CRÉATIONS MODÈLES -->
+        {creationsModeles.length > 0 && (
+          <section>
+            <h2 class="text-2xl font-display mb-6 flex items-center gap-2">
+              <span class="text-accent">◆</span> Créations personnalisées ({creationsModeles.length})
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {creationsModeles.map((creation) => (
+                <a 
+                  href={`/creations/${creation.id}`} 
+                  class="card bg-base-100 shadow-md hover:shadow-xl transition-all hover:scale-105"
+                >
+                  <figure class="px-6 pt-6 bg-base-200 min-h-40 flex items-center justify-center rounded-t-2xl overflow-auto">
+                    <div class="w-28 h-28 flex items-center justify-center" set:html={creation.svg} />
+                  </figure>
+                  <div class="card-body">
+                    <h3 class="card-title text-lg">{creation.nom_creation}</h3>
+                    <p class="text-sm text-base-content/70">
+                      {(creation as any).expand?.id_modele?.nom_modele}
+                    </p>
+                    <p class="text-xs text-base-content/50">
+                      {new Date(creation.created).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <!-- CRÉATIONS IA -->
+        {creationsIA.length > 0 && (
+          <section>
+            <h2 class="text-2xl font-display mb-6 flex items-center gap-2">
+              <span class="text-secondary">◆</span> Créations IA ({creationsIA.length})
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {creationsIA.map((creation) => (
+                <a 
+                  href={`/creations/${creation.id}`} 
+                  class="card bg-base-100 shadow-md hover:shadow-xl transition-all hover:scale-105"
+                >
+                  <figure class="px-6 pt-6 bg-secondary/10 min-h-40 flex items-center justify-center rounded-t-2xl overflow-auto">
+                    <div class="w-28 h-28 flex items-center justify-center" set:html={creation.svg} />
+                  </figure>
+                  <div class="card-body">
+                    <h3 class="card-title text-lg">{creation.nom_creation}</h3>
+                    <p class="text-xs text-secondary font-semibold mb-2">Générée par IA ✨</p>
+                    <p class="text-xs text-base-content/50">
+                      {new Date(creation.created).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    )}
+  </div>
+</Layout>

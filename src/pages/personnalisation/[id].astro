@@ -27,6 +27,8 @@ const materiauxBranches = await pb.collection('Materiau').getFullList({
   filter: 'type_cible ~ "Branches"',
   requestKey: null
 });
+
+const modeleId = id;
 ---
 
 <Layout title={`Personnaliser ${modele.nom_modele}`}>
@@ -50,16 +52,205 @@ const materiauxBranches = await pb.collection('Materiau').getFullList({
 
       <!-- Boutons en bas à droite -->
       <div class="mt-auto flex items-center gap-4 justify-end pt-12">
-        <button class="btn btn-outline h-12 px-6">
+        <button id="download-btn" class="btn btn-outline h-12 px-6" title="Télécharger en SVG">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
           </svg>
         </button>
-        <button class="btn btn-accent h-12 px-8 flex items-center gap-2">
+        <button id="finalize-btn" class="btn btn-accent h-12 px-8 flex items-center gap-2">
           Finaliser
           <img src={flecheIcon.src} alt="" class="w-5 h-5" />
         </button>
       </div>
+
+      <!-- Modal de sauvegarde -->
+      <dialog id="save-modal" class="modal">
+        <div class="modal-box">
+          <h3 class="font-bold text-lg mb-4">Nommer votre création</h3>
+          <input 
+            type="text" 
+            id="creation-name" 
+            placeholder="Ex: Mes lunettes dorées" 
+            class="input input-bordered w-full mb-4"
+          />
+          <div id="error-message" class="alert alert-error hidden mb-4">
+            <span id="error-text"></span>
+          </div>
+          <div id="loading" class="hidden text-center py-4">
+            <span class="loading loading-spinner loading-sm"></span>
+          </div>
+          <div class="modal-action">
+            <button type="button" class="btn" onclick="document.getElementById('save-modal').close()" id="cancel-btn">
+              Annuler
+            </button>
+            <button id="save-btn" type="button" class="btn btn-accent">
+              Enregistrer
+            </button>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+          <button>Fermer</button>
+        </form>
+      </dialog>
     </div>
   </div>
 </Layout>
+
+<script define:vars={{ modeleId }}>
+  // ===== BOUTON TÉLÉCHARGER (icône download juste avant Finaliser) =====
+  document.getElementById('download-btn')?.addEventListener('click', () => {
+    const svgContainer = document.getElementById('svg-container');
+    const svgElement = svgContainer?.querySelector('svg');
+    
+    if (!svgElement) {
+      console.error('SVG non trouvé');
+      alert('SVG non trouvé');
+      return;
+    }
+
+    const svgContent = svgElement.outerHTML;
+    console.log('Téléchargement SVG:', svgContent);
+
+    const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mes-lunettes.svg';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // ===== BOUTON FINALISER = OUVRE LE MODAL POUR ENREGISTRER =====
+  document.getElementById('finalize-btn')?.addEventListener('click', () => {
+    document.getElementById('save-modal')?.showModal();
+  });
+
+  // ===== FONCTION POUR APPLIQUER LES COULEURS AU SVG =====
+  function applyColorsToSVG() {
+    const montureBtn = document.querySelector('[data-partie="monture"].ring-4');
+    const verresBtn = document.querySelector('[data-partie="verres"].ring-4');
+    const branchesBtn = document.querySelector('[data-partie="branches"].ring-4');
+
+    if (montureBtn) {
+      const color = montureBtn.dataset.color;
+      document.querySelectorAll('#monture').forEach(el => {
+        el.setAttribute('fill', `#${color}`);
+      });
+    }
+
+    if (verresBtn) {
+      const color = verresBtn.dataset.color;
+      document.querySelectorAll('.verre').forEach(el => {
+        el.setAttribute('fill', `#${color}`);
+      });
+    }
+
+    if (branchesBtn) {
+      const color = branchesBtn.dataset.color;
+      document.querySelectorAll('.branche').forEach(el => {
+        el.setAttribute('fill', `#${color}`);
+      });
+    }
+  }
+
+  // ===== BOUTON ENREGISTRER (dans le modal) = SAUVEGARDE DANS POCKETBASE =====
+  document.getElementById('save-btn')?.addEventListener('click', async () => {
+    const nameInput = document.getElementById('creation-name');
+    const name = nameInput.value.trim();
+    const saveBtn = document.getElementById('save-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const errorDiv = document.getElementById('error-message');
+    const errorText = document.getElementById('error-text');
+    const loadingDiv = document.getElementById('loading');
+    
+    if (!name) {
+      if (errorDiv && errorText) {
+        errorText.textContent = 'Veuillez entrer un nom';
+        errorDiv.classList.remove('hidden');
+      }
+      return;
+    }
+
+    saveBtn.disabled = true;
+    cancelBtn.disabled = true;
+    saveBtn.textContent = 'Enregistrement...';
+    errorDiv?.classList.add('hidden');
+    loadingDiv?.classList.remove('hidden');
+
+    try {
+      // Appliquer les couleurs au SVG
+      applyColorsToSVG();
+
+      // Récupérer le SVG modifié
+      const svgContainer = document.getElementById('svg-container');
+      const svgElement = svgContainer?.querySelector('svg');
+      const svgContent = svgElement?.outerHTML || '';
+
+      console.log('SVG à enregistrer:', svgContent);
+
+      // Récupérer les couleurs sélectionnées
+      const montureBtn = document.querySelector('[data-partie="monture"].ring-4');
+      const verresBtn = document.querySelector('[data-partie="verres"].ring-4');
+      const branchesBtn = document.querySelector('[data-partie="branches"].ring-4');
+
+      const materiaux = [];
+      
+      if (montureBtn && montureBtn.dataset.color) {
+        materiaux.push({
+          code_valeur: montureBtn.dataset.color,
+          partie_ciblee: 'monture'
+        });
+      }
+
+      if (verresBtn && verresBtn.dataset.color) {
+        materiaux.push({
+          code_valeur: verresBtn.dataset.color,
+          partie_ciblee: 'verres'
+        });
+      }
+
+      if (branchesBtn && branchesBtn.dataset.color) {
+        materiaux.push({
+          code_valeur: branchesBtn.dataset.color,
+          partie_ciblee: 'branches'
+        });
+      }
+
+      console.log('Matériaux à enregistrer:', materiaux);
+
+      // Sauvegarder la création avec le SVG modifié
+      const response = await fetch('/api/saveSVG', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name,
+          svg: svgContent,
+          id_modele: modeleId,
+          materiaux: materiaux
+        })
+      });
+
+      const data = await response.json();
+
+      console.log('Réponse API:', data);
+
+      if (data.success) {
+        window.location.href = `/creations/${data.id}`;
+      } else {
+        throw new Error(data.error || 'Erreur lors de la sauvegarde');
+      }
+    } catch (error) {
+      console.error('Erreur complète:', error);
+      if (errorDiv && errorText) {
+        errorText.textContent = error instanceof Error ? error.message : 'Erreur lors de la sauvegarde';
+        errorDiv.classList.remove('hidden');
+      }
+      saveBtn.disabled = false;
+      cancelBtn.disabled = false;
+      saveBtn.textContent = 'Enregistrer';
+      loadingDiv?.classList.add('hidden');
+    }
+  });
+</script>

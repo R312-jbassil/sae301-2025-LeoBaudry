@@ -1,0 +1,243 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Assistant IA - Créateur de lunettes">
+  <main class="min-h-screen p-6 flex flex-col gap-6 items-center bg-base-200">
+    <div class="flex w-full max-w-5xl items-center justify-between">
+      <h1 class="text-3xl font-bold font-display">Créateur IA de lunettes</h1>
+      <a href="/" class="btn btn-secondary">← Accueil</a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl">
+      <!-- GAUCHE : Chat et contrôles -->
+      <div class="card bg-base-100 shadow-xl p-4 flex flex-col gap-4">
+        <h2 class="font-semibold text-lg font-display">Décrivez vos lunettes</h2>
+        
+        <textarea
+          id="user-prompt"
+          class="textarea textarea-bordered textarea-lg w-full h-32"
+          placeholder="Ex: Des lunettes rondes élégantes avec une monture dorée et des verres bleu clair..."
+        ></textarea>
+
+        <div class="flex gap-2">
+          <button id="generate-button" class="btn btn-accent flex-1">Générer</button>
+          <button id="edit-button" class="btn btn-secondary flex-1">Modifier</button>
+        </div>
+
+        <div id="loading" class="hidden text-center py-4">
+          <span class="loading loading-spinner loading-lg"></span>
+          <p class="mt-2">Génération en cours...</p>
+        </div>
+
+        <div id="error-message" class="alert alert-error hidden"></div>
+
+        <div class="divider"></div>
+
+        <div class="flex gap-2">
+          <input 
+            id="svg-name" 
+            type="text" 
+            placeholder="Nom de votre création" 
+            class="input input-bordered input-sm w-full" 
+          />
+          <button id="save-svg" class="btn btn-success">Enregistrer</button>
+        </div>
+      </div>
+
+      <!-- DROITE : Code SVG -->
+      <div class="card bg-base-100 shadow-xl p-4 flex flex-col gap-2">
+        <h2 class="font-semibold text-lg font-display">Code SVG</h2>
+        <pre id="svg-output" class="whitespace-pre-wrap text-xs bg-base-300 p-3 rounded overflow-auto max-h-96 text-secondary"></pre>
+      </div>
+    </div>
+
+    <!-- PREVIEW SVG -->
+    <div class="card bg-base-100 shadow-xl p-6 w-full max-w-5xl">
+      <h2 class="font-semibold text-lg font-display mb-4">Aperçu</h2>
+      <div id="svg-container" class="flex justify-center items-center min-h-[400px] bg-base-200 rounded">
+        <p class="text-base-content/50">Votre création apparaîtra ici</p>
+      </div>
+    </div>
+  </main>
+
+<script>
+    let promptList: { role: string; content: any; }[] = [];
+
+    // ===== GÉNÉRER =====
+    async function generateSVG(messages: any[]) {
+      const res = await fetch('/api/generateSVG', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages }),
+      });
+      if (!res.ok) throw new Error("Erreur API SVG");
+      const data = await res.json();
+      return data.svg;
+    }
+
+    // ===== HANDLE GENERATE =====
+    async function handleGenerate() {
+      const promptElement = document.getElementById('user-prompt') as HTMLTextAreaElement | null;
+      const generateButton = document.getElementById('generate-button') as HTMLButtonElement | null;
+      const editButton = document.getElementById('edit-button') as HTMLButtonElement | null;
+      const svgOutput = document.getElementById('svg-output') as HTMLElement | null;
+      const svgContainer = document.getElementById('svg-container') as HTMLElement | null;
+      const loadingDiv = document.getElementById('loading') as HTMLElement | null;
+      const errorDiv = document.getElementById('error-message') as HTMLElement | null;
+
+      if (!promptElement || !generateButton || !editButton || !svgOutput || !svgContainer || !loadingDiv || !errorDiv) {
+        alert('Élément de la page introuvable. Veuillez recharger la page.');
+        return;
+      }
+
+      const prompt = promptElement.value.trim();
+      if (!prompt) {
+        alert('Veuillez décrire vos lunettes');
+        return;
+      }
+
+      promptList = [{ role: 'user', content: prompt }];
+
+      svgContainer.innerHTML = '<span class="loading loading-spinner loading-lg"></span>';
+      generateButton.disabled = true;
+      editButton.disabled = true;
+      loadingDiv.classList.remove('hidden');
+      errorDiv.classList.add('hidden');
+
+      try {
+        const svgCode = await generateSVG(promptList);
+        promptList.push({ role: 'assistant', content: svgCode });
+
+        svgOutput.textContent = svgCode;
+        svgContainer.innerHTML = svgCode;
+        promptElement.value = '';
+
+        console.log('Historique après génération:', promptList);
+      } catch (err) {
+        console.error('Erreur génération SVG:', err);
+        errorDiv.textContent = 'Erreur lors de la génération du SVG.';
+        errorDiv.classList.remove('hidden');
+        svgContainer.innerHTML = '<p class="text-error">Erreur lors de la génération</p>';
+      } finally {
+        generateButton.disabled = false;
+        editButton.disabled = false;
+        loadingDiv.classList.add('hidden');
+      }
+    }
+
+    // ===== HANDLE EDIT =====
+        async function handleEdit() {
+          const promptElement = document.getElementById('user-prompt') as HTMLTextAreaElement | null;
+          const generateButton = document.getElementById('generate-button') as HTMLButtonElement | null;
+          const editButton = document.getElementById('edit-button') as HTMLButtonElement | null;
+          const svgOutput = document.getElementById('svg-output') as HTMLElement | null;
+          const svgContainer = document.getElementById('svg-container') as HTMLElement | null;
+          const loadingDiv = document.getElementById('loading') as HTMLElement | null;
+          const errorDiv = document.getElementById('error-message') as HTMLElement | null;
+    
+          if (!promptElement || !generateButton || !editButton || !svgOutput || !svgContainer || !loadingDiv || !errorDiv) {
+            alert('Élément de la page introuvable. Veuillez recharger la page.');
+            return;
+          }
+    
+          const prompt = promptElement.value.trim();
+          if (!prompt) {
+            alert('Veuillez décrire vos modifications');
+            return;
+          }
+    
+          if (promptList.length === 0) {
+            alert('Veuillez d\'abord générer un SVG');
+            return;
+          }
+    
+          promptList.push({ role: 'user', content: prompt });
+    
+          svgContainer.innerHTML = '<span class="loading loading-spinner loading-lg"></span>';
+          generateButton.disabled = true;
+          editButton.disabled = true;
+          loadingDiv.classList.remove('hidden');
+          errorDiv.classList.add('hidden');
+    
+          try {
+            const svgCode = await generateSVG(promptList);
+            promptList.push({ role: 'assistant', content: svgCode });
+    
+            svgOutput.textContent = svgCode;
+            svgContainer.innerHTML = svgCode;
+            promptElement.value = '';
+    
+            console.log('Historique après édition:', promptList);
+          } catch (err) {
+            console.error('Erreur édition SVG:', err);
+            errorDiv.textContent = 'Erreur lors de la modification du SVG.';
+            errorDiv.classList.remove('hidden');
+            svgContainer.innerHTML = '<p class="text-error">Erreur lors de la modification</p>';
+          } finally {
+            generateButton.disabled = false;
+            editButton.disabled = false;
+            loadingDiv.classList.add('hidden');
+          }
+        }
+
+    // ===== SAUVEGARDER =====
+    async function saveSVGCreation() {
+      const nameInput = document.getElementById('svg-name') as HTMLInputElement | null;
+      const svgOutput = document.getElementById('svg-output') as HTMLElement | null;
+
+      // Ensure elements exist before accessing their properties
+      if (!nameInput || !svgOutput) {
+        alert('Élément de la page introuvable. Veuillez recharger la page.');
+        return;
+      }
+
+      const name = nameInput.value.trim();
+      const svgCode = svgOutput.textContent ?? '';
+
+      if (!name || !svgCode) {
+        alert('Veuillez générer un SVG et donner un nom.');
+        return;
+      }
+
+      if (promptList.length === 0) {
+        alert('Aucun historique de conversation.');
+        return;
+      }
+
+      console.log('Sauvegarde avec promptList:', promptList);
+
+      try {
+        const response = await fetch('/api/saveSVG', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            svg: svgCode,
+            chat_history: JSON.stringify(promptList),
+            id_modele: null,
+            materiaux: []
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          alert('Lunettes créées et enregistrées avec succès !');
+          window.location.href = `/creations/${result.id}`;
+        } else {
+          alert('Erreur lors de l\'enregistrement : ' + result.error);
+        }
+      } catch (err) {
+        console.error('Erreur sauvegarde:', err);
+        alert('Erreur lors de l\'enregistrement');
+      }
+    }
+
+    // ===== EVENT LISTENERS =====
+    document.getElementById('generate-button')?.addEventListener('click', handleGenerate);
+    document.getElementById('edit-button')?.addEventListener('click', handleEdit);
+    document.getElementById('save-svg')?.addEventListener('click', saveSVGCreation);
+</script>
+
+</Layout>
