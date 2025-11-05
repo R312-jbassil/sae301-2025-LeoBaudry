@@ -8,14 +8,13 @@ export const POST = async ({ request, cookies }) => {
     
     const authData = await pb.collection("users").authWithPassword(email, password);
 
-    // ✅ COMMENTE LE COOKIE POUR L'INSTANT
-    // cookies.set("pb_auth", pb.authStore.exportToCookie(), {
-    //   path: "/",
-    //   httpOnly: false,
-    //   sameSite: "strict",
-    //   secure: import.meta.env.PROD,
-    //   expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-    // });
+    cookies.set("pb_auth", pb.authStore.exportToCookie(), {
+      path: "/",
+      httpOnly: false,
+      sameSite: "strict",
+      secure: import.meta.env.PROD,
+      expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    });
 
     console.log('✅ Login réussi:', authData.record.id);
 
