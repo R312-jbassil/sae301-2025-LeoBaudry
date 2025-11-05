@@ -26,3 +26,5 @@ pnpm-debug.log*
 
 pocketbase/*.md
 pocketbase/pocketbase
+pocketbase.exe
+pocketbase
