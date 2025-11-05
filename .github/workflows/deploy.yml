@@ -45,5 +45,5 @@ jobs:
         port: 22015
         script: |
           cd /var/www/sae301
-          npm ci --production
+          npm ci
           PORT=8088 pm2 restart sae301 || PORT=8088 pm2 start dist/server/entry.mjs --name sae301
