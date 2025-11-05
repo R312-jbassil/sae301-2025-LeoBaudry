@@ -13,37 +13,43 @@ export const POST = async ({ request, cookies }) => {
       );
     }
 
-    // ETAPE 1 : CRÉATION (Celle-ci fonctionnait déjà)
+    // --- C'EST CE CODE DONT VOUS AVEZ BESOIN ---
+
+    // ÉTAPE 1 : On crée l'utilisateur ET on le force à "verified: true"
     const userRecord = await pb.collection("users").create({
       name: name || "",
       email,
       password,
       passwordConfirm: password,
       emailVisibility: true,
+      verified: true  // <-- LA LIGNE CLÉ QUI MANQUE
     });
 
-    console.log('✅ Utilisateur créé:', userRecord.id);
+    console.log('✅ Utilisateur créé et forcé "vérifié":', userRecord.id);
 
-    // --- CHANGEMENT ICI ---
-    // On ne tente PLUS l'auto-login. 
-    // On demande juste à PocketBase d'envoyer l'email de vérification.
-    // (Même si le SMTP n'est pas configuré, cet appel ne plantera pas)
-    try {
-      await pb.collection('users').requestVerification(email);
-      console.log('📨 Demande de vérification envoyée.');
-    } catch (err) {
-      // On ignore l'erreur si le SMTP n'est pas configuré
-      console.warn('Erreur envoi email vérification (SMTP non configuré ?):', err.message);
-    }
+    // ÉTAPE 2 : On remet l'auto-login (qui va maintenant fonctionner)
+    const authData = await pb.collection("users").authWithPassword(email, password);
 
-    // On renvoie un SUCCÈS 200 immédiatement après la création.
+    // ÉTAPE 3 : On remet le cookie
+    cookies.set("pb_auth", pb.authStore.exportToCookie(), {
+      path: "/",
+      httpOnly: false,
+      sameSite: "strict",
+      secure: import.meta.env.PROD,
+      expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    });
+
+    console.log('✅ Signup ET auto-login réussis:', authData.record.id);
+
+    // ÉTAPE 4 : On renvoie le succès avec l'utilisateur connecté
     return new Response(
-      JSON.stringify({ user: userRecord }), 
+      JSON.stringify({ user: authData.record }), 
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
+    // --- FIN DU BON CODE ---
     
   } catch (err) {
-    // Ce bloc attrapera maintenant UNIQUEMENT les vraies erreurs (comme 'email déjà pris')
+  // Ce bloc attrapera l'erreur 'email déjà pris' si vous essayez 2x
     console.error("❌ Erreur inscription:", err.message);
     return new Response(
       JSON.stringify({ 
