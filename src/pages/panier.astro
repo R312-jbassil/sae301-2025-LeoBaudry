@@ -154,7 +154,7 @@ document.querySelectorAll('[id^="remove-"]').forEach(btn => {
     }
 
     try {
-      const response = await fetch('/api/removeFromCart', {
+      const response = await fetch('/apis/removeFromCart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ligneId })
@@ -177,7 +177,7 @@ document.querySelectorAll('[id^="remove-"]').forEach(btn => {
     // Valider la commande
     document.getElementById('validate-order')?.addEventListener('click', async () => {
       try {
-        const response = await fetch('/api/validateOrder', {
+        const response = await fetch('/apis/validateOrder', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ commandeId })

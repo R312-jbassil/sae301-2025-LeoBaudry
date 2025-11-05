@@ -163,7 +163,7 @@ const prix = modele?.prix || 0;
   <script define:vars={{ creationId: id }}>
     document.getElementById('add-to-cart')?.addEventListener('click', async () => {
       try {
-        const response = await fetch('/api/addToCart', {
+        const response = await fetch('/apis/addToCart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ creationId })

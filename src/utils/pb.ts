@@ -3,11 +3,14 @@ import type { TypedPocketBase } from "./pocketbase-types";
 
 var path='';
 if(import.meta.env.MODE === 'development') {
+    // DEV local - tout le monde utilise le dev server
     path = 'http://localhost:8090'
 } else if(import.meta.env.SSR) {
-    path = 'http://127.0.0.1:6767'  // ← SSR (VPS backend)
+    // PROD - serveur backend SSR
+    path = 'http://127.0.0.1:6767'
 } else {
-    path = '/api'  // ← CLIENT (navigateur) utilise le proxy
+    // PROD - client navigateur dans le navigateur
+    path = 'https://sae-301.leo-baudry.fr'
 }
 
 const pb = new PocketBase(path) as TypedPocketBase;

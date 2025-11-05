@@ -229,7 +229,7 @@ const prixBase = isModele ? (creation.expand?.id_modele?.prix || 50) : 0;
         if (branchesBtn) materiaux.push({ code_valeur: branchesBtn.dataset.color, partie_ciblee: 'branches' });
 
         try {
-          const response = await fetch('/api/updateSVG', {
+          const response = await fetch('/apis/updateSVG', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -268,7 +268,7 @@ const prixBase = isModele ? (creation.expand?.id_modele?.prix || 50) : 0;
           const chatHistory = JSON.parse(chatHistoryJson);
           chatHistory.push({ role: 'user', content: prompt });
 
-          const response = await fetch('/api/generateSVG', {
+          const response = await fetch('/apis/generateSVG', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ messages: chatHistory })
@@ -283,7 +283,7 @@ const prixBase = isModele ? (creation.expand?.id_modele?.prix || 50) : 0;
           document.getElementById('svg-container').innerHTML = newSvg;
 
           // Sauvegarder
-          const updateResponse = await fetch('/api/updateSVG', {
+          const updateResponse = await fetch('/apis/updateSVG', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

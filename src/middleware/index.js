@@ -12,16 +12,16 @@ export const onRequest = async (context, next) => {
     }
   }
 
-  // Pour les routes API, on exige l'authentification SAUF pour /api/auth/login ET /api/auth/signup
-  if (context.url.pathname.startsWith('/api/')) {
+  // Pour les routes API, on exige l'authentification SAUF pour /apis/auth/login ET /apis/auth/signup
+  if (context.url.pathname.startsWith('/apis/')) {
     console.log('🔍 Route API détectée:', context.url.pathname);
     console.log('🔍 User connecté ?', !!context.locals.user);
     
-    // IMPORTANT: C'est /api/auth/login et /api/auth/logout
+    // IMPORTANT: C'est /apis/auth/login et /apis/auth/logout
     if (!context.locals.user && 
-        context.url.pathname !== '/api/auth/login' && 
-        context.url.pathname !== '/api/auth/signup' &&
-        context.url.pathname !== '/api/auth/logout') {
+        context.url.pathname !== '/apis/auth/login' && 
+        context.url.pathname !== '/apis/auth/signup' &&
+        context.url.pathname !== '/apis/auth/logout') {
       console.log('❌ API bloquée');
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
