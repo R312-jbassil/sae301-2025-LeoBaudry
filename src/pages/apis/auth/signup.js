@@ -13,6 +13,7 @@ export const POST = async ({ request, cookies }) => {
       );
     }
 
+    // ETAPE 1 : CRÉATION (Celle-ci fonctionnait déjà)
     const userRecord = await pb.collection("users").create({
       name: name || "",
       email,
@@ -23,24 +24,26 @@ export const POST = async ({ request, cookies }) => {
 
     console.log('✅ Utilisateur créé:', userRecord.id);
 
-    const authData = await pb.collection("users").authWithPassword(email, password);
+    // --- CHANGEMENT ICI ---
+    // On ne tente PLUS l'auto-login. 
+    // On demande juste à PocketBase d'envoyer l'email de vérification.
+    // (Même si le SMTP n'est pas configuré, cet appel ne plantera pas)
+    try {
+      await pb.collection('users').requestVerification(email);
+      console.log('📨 Demande de vérification envoyée.');
+    } catch (err) {
+      // On ignore l'erreur si le SMTP n'est pas configuré
+      console.warn('Erreur envoi email vérification (SMTP non configuré ?):', err.message);
+    }
 
-    cookies.set("pb_auth", pb.authStore.exportToCookie(), {
-      path: "/",
-      httpOnly: false,
-      sameSite: "strict",
-      secure: import.meta.env.PROD,
-      expires: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-    });
-
-    console.log('✅ Signup réussi:', authData.record.id);
-
+    // On renvoie un SUCCÈS 200 immédiatement après la création.
     return new Response(
-      JSON.stringify({ user: authData.record }), 
+      JSON.stringify({ user: userRecord }), 
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
     
   } catch (err) {
+    // Ce bloc attrapera maintenant UNIQUEMENT les vraies erreurs (comme 'email déjà pris')
     console.error("❌ Erreur inscription:", err.message);
     return new Response(
       JSON.stringify({ 
