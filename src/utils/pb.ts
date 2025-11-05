@@ -1,14 +1,15 @@
 import PocketBase from 'pocketbase';
 import type { TypedPocketBase } from "./pocketbase-types";
 
+// src/utils/pb.ts
+
 var path = '';
 if(import.meta.env.MODE === 'development') {
-    // DEV local - tout le monde utilise le dev server
+    // DEV local
     path = 'http://localhost:8090'
 } else if(import.meta.env.SSR) {
-    // ✅ CORRECTION : SSR doit aussi utiliser l'URL publique
-    // ou une URL interne qui pointe vers la MÊME instance
-    path = 'https://sae-301.leo-baudry.fr'  // Ou 'http://localhost:6767' si c'est un proxy local
+    // PROD - serveur backend SSR
+    path = 'http://127.0.0.1:6767' // <-- C'EST LA CORRECTION
 } else {
     // PROD - client navigateur
     path = 'https://sae-301.leo-baudry.fr'
