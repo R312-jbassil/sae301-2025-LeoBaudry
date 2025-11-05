@@ -64,10 +64,21 @@ const prixBase = isModele ? (creation.expand?.id_modele?.prix || 50) : 0;
 
 <Layout title={creation.nom_creation}>
   <div class="container mx-auto px-4 py-16">
-    <div class="flex items-center justify-between mb-8">
-      <h1 class="text-4xl font-display">{creation.nom_creation}</h1>
-      <a href="/creations" class="btn btn-secondary">← Retour</a>
+    <!-- ✅ Bouton retour en haut -->
+    <div class="mb-8 flex justify-start">
+    <a 
+        href="/creations" 
+        class="flex items-center gap-2 text-base-content/70 hover:text-base-content transition pt-12"
+    >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Retour
+    </a>
     </div>
+
+    <!-- ✅ Titre centré -->
+    <h1 class="text-4xl font-display text-center mb-8">{creation.nom_creation}</h1>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- GAUCHE : SVG Preview -->
@@ -78,7 +89,7 @@ const prixBase = isModele ? (creation.expand?.id_modele?.prix || 50) : 0;
 
         {isModele && (
           <div class="mt-6 p-4 bg-accent/10 rounded-lg">
-            <p class="text-sm text-base-content/60">Prix estimé</p>
+            <p class="text-sm text-base-content/60">Prix</p>
             <p class="text-3xl font-bold">{prixBase}€</p>
           </div>
         )}
@@ -181,8 +192,7 @@ const prixBase = isModele ? (creation.expand?.id_modele?.prix || 50) : 0;
 
     // ===== FINALISER COMMANDE =====
     document.getElementById('finalize-btn')?.addEventListener('click', () => {
-      alert('Fonctionnalité de commande à venir !');
-      // TODO: Rediriger vers page de commande
+      window.location.href = `/finalisation/${creationId}`;
     });
 
     // ===== SAUVEGARDER MODIFICATIONS (Modèle) =====

@@ -42,13 +42,24 @@ const modeleId = id;
 
     <!-- DROITE : Options de personnalisation (2/3) -->
     <div class="lg:col-span-2 p-6 lg:p-16 flex flex-col">
-      <h1 class="text-3xl lg:text-4xl font-display mb-8">{modele.nom_modele}</h1>
+      <h1 class="text-3xl lg:text-4xl font-display mb-2">Créez votre paire unique</h1>
+      <p class="text-base-content/70 mb-8">
+        Modèle sélectionné : <strong>{modele.nom_modele}</strong>
+      </p>
       
       <PersonnalisationTabs 
         materiauxMonture={materiauxMonture}
         materiauxVerres={materiauxVerres}
         materiauxBranches={materiauxBranches}
       />
+
+      <!-- ✅ NUDGE : Aversion à la perte -->
+      <div class="alert alert-warning mt-6">
+        <svg class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span><strong>Votre design unique n'est pas encore sauvegardé !</strong></span>
+      </div>
 
       <!-- Boutons en bas à droite -->
       <div class="mt-auto flex items-center gap-4 justify-end pt-12">
@@ -58,7 +69,7 @@ const modeleId = id;
           </svg>
         </button>
         <button id="finalize-btn" class="btn btn-accent h-12 px-8 flex items-center gap-2">
-          Finaliser
+          ✨ Sauvegarder ma création
           <img src={flecheIcon.src} alt="" class="w-5 h-5" />
         </button>
       </div>
@@ -66,13 +77,21 @@ const modeleId = id;
       <!-- Modal de sauvegarde -->
       <dialog id="save-modal" class="modal">
         <div class="modal-box">
-          <h3 class="font-bold text-lg mb-4">Nommer votre création</h3>
+          <!-- ✅ NUDGE : Effet de dotation -->
+          <h3 class="font-bold text-lg mb-2">Donnez un nom à votre création</h3>
+          <p class="text-sm text-base-content/70 mb-4">Faites de cette paire votre création personnelle.</p>
+          
           <input 
             type="text" 
             id="creation-name" 
-            placeholder="Ex: Mes lunettes dorées" 
+            placeholder="Ex: Les lunettes de mes rêves..." 
             class="input input-bordered w-full mb-4"
           />
+          
+          <p class="text-xs text-center text-base-content/60 mb-4">
+            Créez votre compte pour ne pas perdre ce design unique.
+          </p>
+
           <div id="error-message" class="alert alert-error hidden mb-4">
             <span id="error-text"></span>
           </div>
@@ -84,7 +103,7 @@ const modeleId = id;
               Annuler
             </button>
             <button id="save-btn" type="button" class="btn btn-accent">
-              Enregistrer
+              Enregistrer ma création
             </button>
           </div>
         </div>
@@ -97,20 +116,45 @@ const modeleId = id;
 </Layout>
 
 <script define:vars={{ modeleId }}>
-  // ===== BOUTON TÉLÉCHARGER (icône download juste avant Finaliser) =====
+  let hasUnsavedChanges = false;
+
+  // ✅ NUDGE : Aversion à la perte (Confirmation de sortie)
+  window.addEventListener('beforeunload', (e) => {
+    if (hasUnsavedChanges) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  // Marquer comme modifié quand on change une couleur
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-color]')) {
+      hasUnsavedChanges = true;
+      
+      // ✅ NUDGE : Feedback instantané
+      const message = document.createElement('div');
+      message.className = 'toast toast-top toast-end';
+      message.innerHTML = `
+        <div class="alert alert-success">
+          <span>✨ Couleur appliquée !</span>
+        </div>
+      `;
+      document.body.appendChild(message);
+      setTimeout(() => message.remove(), 2000);
+    }
+  });
+
+  // ===== BOUTON TÉLÉCHARGER =====
   document.getElementById('download-btn')?.addEventListener('click', () => {
     const svgContainer = document.getElementById('svg-container');
     const svgElement = svgContainer?.querySelector('svg');
     
     if (!svgElement) {
-      console.error('SVG non trouvé');
       alert('SVG non trouvé');
       return;
     }
 
     const svgContent = svgElement.outerHTML;
-    console.log('Téléchargement SVG:', svgContent);
-
     const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -122,40 +166,37 @@ const modeleId = id;
     URL.revokeObjectURL(url);
   });
 
-  // ===== BOUTON FINALISER = OUVRE LE MODAL POUR ENREGISTRER =====
+  // ===== BOUTON FINALISER =====
   document.getElementById('finalize-btn')?.addEventListener('click', () => {
     document.getElementById('save-modal')?.showModal();
   });
 
-  // ===== FONCTION POUR APPLIQUER LES COULEURS AU SVG =====
+  // ===== APPLIQUER LES COULEURS =====
   function applyColorsToSVG() {
     const montureBtn = document.querySelector('[data-partie="monture"].ring-4');
     const verresBtn = document.querySelector('[data-partie="verres"].ring-4');
     const branchesBtn = document.querySelector('[data-partie="branches"].ring-4');
 
     if (montureBtn) {
-      const color = montureBtn.dataset.color;
       document.querySelectorAll('#monture').forEach(el => {
-        el.setAttribute('fill', `#${color}`);
+        el.setAttribute('fill', `#${montureBtn.dataset.color}`);
       });
     }
 
     if (verresBtn) {
-      const color = verresBtn.dataset.color;
       document.querySelectorAll('.verre').forEach(el => {
-        el.setAttribute('fill', `#${color}`);
+        el.setAttribute('fill', `#${verresBtn.dataset.color}`);
       });
     }
 
     if (branchesBtn) {
-      const color = branchesBtn.dataset.color;
       document.querySelectorAll('.branche').forEach(el => {
-        el.setAttribute('fill', `#${color}`);
+        el.setAttribute('fill', `#${branchesBtn.dataset.color}`);
       });
     }
   }
 
-  // ===== BOUTON ENREGISTRER (dans le modal) = SAUVEGARDE DANS POCKETBASE =====
+  // ===== BOUTON ENREGISTRER =====
   document.getElementById('save-btn')?.addEventListener('click', async () => {
     const nameInput = document.getElementById('creation-name');
     const name = nameInput.value.trim();
@@ -167,7 +208,7 @@ const modeleId = id;
     
     if (!name) {
       if (errorDiv && errorText) {
-        errorText.textContent = 'Veuillez entrer un nom';
+        errorText.textContent = 'Veuillez entrer un nom pour votre création';
         errorDiv.classList.remove('hidden');
       }
       return;
@@ -180,17 +221,12 @@ const modeleId = id;
     loadingDiv?.classList.remove('hidden');
 
     try {
-      // Appliquer les couleurs au SVG
       applyColorsToSVG();
 
-      // Récupérer le SVG modifié
       const svgContainer = document.getElementById('svg-container');
       const svgElement = svgContainer?.querySelector('svg');
       const svgContent = svgElement?.outerHTML || '';
 
-      console.log('SVG à enregistrer:', svgContent);
-
-      // Récupérer les couleurs sélectionnées
       const montureBtn = document.querySelector('[data-partie="monture"].ring-4');
       const verresBtn = document.querySelector('[data-partie="verres"].ring-4');
       const branchesBtn = document.querySelector('[data-partie="branches"].ring-4');
@@ -218,9 +254,6 @@ const modeleId = id;
         });
       }
 
-      console.log('Matériaux à enregistrer:', materiaux);
-
-      // Sauvegarder la création avec le SVG modifié
       const response = await fetch('/api/saveSVG', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -234,22 +267,21 @@ const modeleId = id;
 
       const data = await response.json();
 
-      console.log('Réponse API:', data);
-
       if (data.success) {
+        hasUnsavedChanges = false;
         window.location.href = `/creations/${data.id}`;
       } else {
         throw new Error(data.error || 'Erreur lors de la sauvegarde');
       }
     } catch (error) {
-      console.error('Erreur complète:', error);
+      console.error('Erreur:', error);
       if (errorDiv && errorText) {
         errorText.textContent = error instanceof Error ? error.message : 'Erreur lors de la sauvegarde';
         errorDiv.classList.remove('hidden');
       }
       saveBtn.disabled = false;
       cancelBtn.disabled = false;
-      saveBtn.textContent = 'Enregistrer';
+      saveBtn.textContent = 'Enregistrer ma création';
       loadingDiv?.classList.add('hidden');
     }
   });

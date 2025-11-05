@@ -1,0 +1,197 @@
+---
+import Layout from '../layouts/Layout.astro';
+import pb from '../utils/pb';
+
+let commande: any = null;
+let lignesCommande: any[] = [];
+let prixTotal = 0;
+let debugMsg = "";
+
+try {
+  console.log('=== PANIER DEBUG ===');
+  
+  // Récupérer TOUTES les commandes "En_cours" pour voir
+  const toutesCommandes = await pb.collection('Commandes').getFullList({
+    filter: `statut = "En_cours"`,
+    requestKey: null
+  });
+  
+  console.log('Commandes En_cours trouvées:', toutesCommandes.length);
+  toutesCommandes.forEach(c => console.log('  -', c.id, c.date_commande));
+  
+  // Prendre la première (la plus récente devrait être la dernière)
+  if (toutesCommandes.length > 0) {
+    commande = toutesCommandes[toutesCommandes.length - 1]; // Dernière = plus récente
+    console.log('✅ Commande sélectionnée:', commande.id);
+
+    lignesCommande = await pb.collection('Lignes_commande').getFullList({
+      filter: `id_commandes = "${commande.id}"`,
+      expand: 'id_creation,id_creation.id_modele',
+      requestKey: null
+    });
+
+    console.log('Lignes trouvées:', lignesCommande.length);
+
+    // Calculer le prix total
+    prixTotal = lignesCommande.reduce((total, ligne) => {
+      const prix = ligne.expand?.id_creation?.expand?.id_modele?.prix || 0;
+      console.log('  - Création:', ligne.expand?.id_creation?.nom_creation, 'Prix:', prix);
+      return total + (prix * ligne.quantite);
+    }, 0);
+
+    debugMsg = `✅ ${lignesCommande.length} articles trouvés`;
+  } else {
+    debugMsg = "❌ Aucune commande En_cours";
+  }
+} catch (err) {
+  console.log('❌ Erreur panier:', err.message);
+  debugMsg = `Erreur: ${err.message}`;
+}
+
+console.log('=== FIN DEBUG ===');
+---
+
+<Layout title="Mon Panier">
+  <div class="container mx-auto px-4 py-16">
+
+    <!-- Bouton retour -->
+    <div class="mb-8 flex justify-start">
+      <button 
+        onclick="history.back()" 
+        class="flex items-center gap-2 text-base-content/70 hover:text-base-content transition"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Retour
+      </button>
+    </div>
+
+    <h1 class="text-4xl font-display text-center mb-12">🛒 Mon Panier</h1>
+
+    {lignesCommande.length === 0 ? (
+      <div class="text-center py-12">
+        <p class="text-xl text-base-content/60 mb-6">Votre panier est vide</p>
+        <a href="/" class="btn btn-accent">Retour à l'accueil</a>
+      </div>
+    ) : (
+      <div class="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <!-- GAUCHE : Articles du panier -->
+        <div class="lg:col-span-2 flex flex-col gap-4">
+          {lignesCommande.map((ligne) => (
+            <div class="bg-base-100 rounded border border-black/10 p-6">
+              <div class="grid grid-cols-4 gap-4 items-start">
+                <div class="col-span-1 flex items-center justify-center bg-base-200 rounded p-3 h-150px">
+                <div class="w-30 h-30 flex items-center justify-center" set:html={ligne.expand?.id_creation?.svg} />
+                </div>
+
+                <div class="col-span-3 flex flex-col justify-between">
+                  <div>
+                    <h3 class="text-lg font-display mb-1">{ligne.expand?.id_creation?.nom_creation}</h3>
+                    <p class="text-sm text-base-content/60">
+                      Modèle : {ligne.expand?.id_creation?.expand?.id_modele?.nom_modele}
+                    </p>
+                  </div>
+
+                  <div class="flex items-center justify-between mt-4">
+                    <p class="text-2xl font-bold text-accent">
+                      {(ligne.expand?.id_creation?.expand?.id_modele?.prix || 0).toFixed(2)}€
+                    </p>
+                    
+                    <button 
+                        id={`remove-${ligne.id}`}
+                        class="btn btn-ghost btn-lg text-lg px-4 py-3"
+                        data-ligne-id={ligne.id}
+                    >
+                        🗑 Retirer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <!-- DROITE : Résumé panier -->
+        <div class="lg:col-span-1">
+          <div class="bg-base-100 rounded border border-black/10 p-6 sticky top-20">
+            <h2 class="text-xl font-display mb-4">Résumé</h2>
+            
+            <div class="space-y-2 mb-6 pb-6 border-b border-base-300">
+              <div class="flex justify-between text-sm">
+                <span>{lignesCommande.length} article(s)</span>
+                <span>{prixTotal.toFixed(2)}€</span>
+              </div>
+              <div class="flex justify-between text-sm text-base-content/60">
+                <span>Frais de port</span>
+                <span>Offerts</span>
+              </div>
+            </div>
+
+            <div class="flex justify-between text-lg font-bold mb-6">
+              <span>Total</span>
+              <span class="text-accent">{prixTotal.toFixed(2)}€</span>
+            </div>
+
+            <button 
+              id="validate-order"
+              class="btn btn-accent btn-lg w-full"
+            >
+              ✅ Valider la commande
+            </button>
+
+            <a 
+              href="/creations" 
+              class="btn btn-outline btn-lg w-full mt-2"
+            >
+              ← Continuer le shopping
+            </a>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+
+  <script define:vars={{ commandeId: commande?.id }}>
+    // Retirer un article
+    document.querySelectorAll('[id^="remove-"]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const ligneId = e.target.dataset.ligneId;
+        
+        try {
+          const response = await fetch('/api/removeFromCart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ligneId })
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            location.reload();
+          }
+        } catch (err) {
+          alert('Erreur lors du retrait');
+        }
+      });
+    });
+
+    // Valider la commande
+    document.getElementById('validate-order')?.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/validateOrder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ commandeId })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          alert('✅ Commande validée !');
+          window.location.href = '/';
+        }
+      } catch (err) {
+        alert('Erreur lors de la validation');
+      }
+    });
+  </script>
+</Layout>

@@ -3,6 +3,27 @@ import tavueLogo from '../assets/svgs/tavue.svg';
 import userIcon from '../assets/svgs/user.svg';
 import panierIcon from '../assets/svgs/panier.svg';
 import flecheIcon from '../assets/svgs/fleche1.svg';
+import pb from '../utils/pb';
+
+// Récupérer le nombre d'articles en panier
+let cartCount = 0;
+try {
+  const commandes = await pb.collection('Commandes').getFullList({
+    filter: `statut = "En_cours"`,
+    requestKey: null
+  });
+  
+  if (commandes.length > 0) {
+    const lastCommande = commandes[commandes.length - 1];
+    const lignes = await pb.collection('Lignes_commande').getFullList({
+      filter: `id_commandes = "${lastCommande.id}"`,
+      requestKey: null
+    });
+    cartCount = lignes.length;
+  }
+} catch (err) {
+  console.log('Erreur récupération panier:', err);
+}
 ---
 
 <header class="fixed left-0 right-0 z-80 bg-base-100 border-b border-base-300 transition-all duration-300" id="main-header">
@@ -34,9 +55,14 @@ import flecheIcon from '../assets/svgs/fleche1.svg';
           <img src={userIcon.src} alt="Compte" class="w-6 h-6" />
         </a>
 
-        <!-- Panier -->
-        <a href="/panier" aria-label="Panier">
+        <!-- Panier avec badge -->
+        <a href="/panier" aria-label="Panier" class="relative">
           <img src={panierIcon.src} alt="Panier" class="w-6 h-6" />
+          {cartCount > 0 && (
+            <span class="absolute -top-2 -right-2 bg-accent text-accent-content text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+              {cartCount}
+            </span>
+          )}
         </a>
       </div>
     </div>
@@ -129,3 +155,4 @@ import flecheIcon from '../assets/svgs/fleche1.svg';
   menuToggle?.addEventListener('click', toggleMenu);
   menuOverlay?.addEventListener('click', toggleMenu);
 </script>
+

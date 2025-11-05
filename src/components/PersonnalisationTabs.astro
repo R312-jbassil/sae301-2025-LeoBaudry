@@ -12,22 +12,22 @@ const { materiauxMonture, materiauxVerres, materiauxBranches } = Astro.props;
 
 <div class="personnalisation-container">
   <!-- Les 3 boutons tabs -->
-  <div class="flex gap-2 md:gap-4 mb-6 md:mb-8">
+  <div class="flex gap-2 md:gap-3 mb-6 md:mb-8 overflow-hidden">
     <button 
       data-tab="monture" 
-      class="tab-btn flex-1 py-3 md:py-4 px-4 md:px-8 rounded-lg font-display text-base md:text-xl bg-accent text-white"
+      class="tab-btn py-3 md:py-4 px-4 md:px-8 rounded-lg font-display text-base md:text-xl bg-accent text-white transition-all duration-300 flex-2"
     >
-      Monture →
+      Monture
     </button>
     <button 
       data-tab="verres" 
-      class="tab-btn flex-1 py-3 md:py-4 px-4 md:px-8 rounded-lg font-display text-base md:text-xl bg-secondary text-white"
+      class="tab-btn py-3 md:py-4 px-4 md:px-8 rounded-lg font-display text-base md:text-xl bg-secondary text-white transition-all duration-300 flex-1"
     >
       Verres
     </button>
     <button 
       data-tab="branches" 
-      class="tab-btn flex-1 py-3 md:py-4 px-4 md:px-8 rounded-lg font-display text-base md:text-xl bg-secondary text-white"
+      class="tab-btn py-3 md:py-4 px-4 md:px-8 rounded-lg font-display text-base md:text-xl bg-secondary text-white transition-all duration-300 flex-1"
     >
       Branches
     </button>
@@ -35,13 +35,13 @@ const { materiauxMonture, materiauxVerres, materiauxBranches } = Astro.props;
 
   <!-- Contenu des tabs -->
   <div class="bg-base-200 p-4 md:p-8 rounded-lg min-h-[300px] md:min-h-[400px]">
-    <!-- Tab Monture (visible par défaut, PAS de hidden) -->
+    <!-- Tab Monture (visible par défaut) -->
     <div id="tab-monture" class="tab-content block">
       <h3 class="text-lg md:text-2xl font-display mb-4 md:mb-6">Quel style vous correspond ?</h3>
       <div class="grid grid-rows-3 grid-flow-col gap-1 md:gap-4 auto-cols-max">
         {materiauxMonture.map((mat) => (
           <button 
-            class="color-btn w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-neutral hover:scale-110 transition-transform"
+            class="color-btn w-12 h-12 md:w-16 md:h-16 rounded-full  hover:scale-110 transition-transform"
             style={`background-color: #${mat.code_valeur}`}
             data-color={mat.code_valeur}
             data-partie="monture"
@@ -65,7 +65,7 @@ const { materiauxMonture, materiauxVerres, materiauxBranches } = Astro.props;
       <div class="grid grid-cols-4 md:grid-cols-8 gap-2 md:gap-4 mt-4 md:mt-6">
         {materiauxVerres.map((mat) => (
           <button 
-            class="color-btn w-12 h-12 md:w-16 md:h-16 rounded-lg border-2 border-neutral hover:scale-110 transition-transform"
+            class="color-btn w-12 h-12 md:w-16 md:h-16 rounded-lg border hover:scale-110 transition-transform"
             style={`background-color: #${mat.code_valeur}`}
             data-color={mat.code_valeur}
             data-partie="verres"
@@ -81,7 +81,7 @@ const { materiauxMonture, materiauxVerres, materiauxBranches } = Astro.props;
       <div class="grid grid-rows-3 grid-flow-col gap-1 md:gap-4 auto-cols-max">
         {materiauxBranches.map((mat) => (
           <button 
-            class="color-btn w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-neutral hover:scale-110 transition-transform"
+            class="color-btn w-12 h-12 md:w-16 md:h-16 rounded-full hover:scale-110 transition-transform"
             style={`background-color: #${mat.code_valeur}`}
             data-color={mat.code_valeur}
             data-partie="branches"
@@ -98,6 +98,20 @@ const { materiauxMonture, materiauxVerres, materiauxBranches } = Astro.props;
     const buttons = document.querySelectorAll('.tab-btn');
     const contents = document.querySelectorAll('.tab-content');
 
+    function updateTabSizes() {
+      buttons.forEach(button => {
+        if (button.classList.contains('bg-accent')) {
+          // Actif = flex-[2] (66%)
+          button.classList.add('flex-[2]');
+          button.classList.remove('flex-1');
+        } else {
+          // Inactif = flex-1 (33%)
+          button.classList.add('flex-1');
+          button.classList.remove('flex-[2]');
+        }
+      });
+    }
+
     buttons.forEach(button => {
       button.addEventListener('click', () => {
         const targetTab = button.getAttribute('data-tab');
@@ -110,6 +124,9 @@ const { materiauxMonture, materiauxVerres, materiauxBranches } = Astro.props;
         
         button.classList.remove('bg-secondary');
         button.classList.add('bg-accent');
+        
+        // Update flex sizes
+        updateTabSizes();
         
         // Cache tout
         contents.forEach(content => {
@@ -125,6 +142,9 @@ const { materiauxMonture, materiauxVerres, materiauxBranches } = Astro.props;
         }
       });
     });
+
+    // Init sizes on load
+    updateTabSizes();
 
     // Couleurs
     const colorButtons = document.querySelectorAll('.color-btn');

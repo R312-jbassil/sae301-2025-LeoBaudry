@@ -1,0 +1,184 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import pb from '../../utils/pb';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/');
+}
+
+const creation = await pb.collection('Creations').getOne(id, {
+  expand: 'id_modele',
+  requestKey: null
+});
+
+// Récupérer les couleurs choisies
+let couleursChoisies: any[] = [];
+if ((creation as any).id_modele) {
+  couleursChoisies = await pb.collection('Choisir').getFullList({
+    filter: `id_creation="${id}"`,
+    expand: 'id_materiau',
+    requestKey: null
+  });
+}
+
+const modele = (creation as any).expand?.id_modele;
+const prix = modele?.prix || 0;
+---
+
+<Layout title="Finalisation de commande">
+  <div class="min-h-screen bg-base-100 pt-16 pb-12">
+    <div class="container mx-auto px-4">
+      <!-- ✅ Bouton retour en haut -->
+      <div class="mb-8 flex justify-start">
+        <button 
+          onclick="history.back()" 
+          class="flex items-center gap-2 text-base-content/70 hover:text-base-content transition"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          Retour
+        </button>
+      </div>
+
+      <h1 class="text-4xl font-display mb-12 text-center pt-12">✨ Finalisez votre commande</h1>
+      
+      <div class="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+        <!-- GAUCHE : SVG en grand -->
+        <div class="flex items-center justify-center bg-base-100 rounded border border-black/10 p-8 h-fit sticky top-20">
+          <div class="w-full max-w-sm">
+            <div set:html={creation.svg} />
+          </div>
+        </div>
+
+        <!-- DROITE : Résumé commande -->
+        <div class="flex flex-col gap-6">
+          <!-- Modèle -->
+          <div class="bg-base-100 rounded border border-black/10 p-6">
+            <h2 class="text-lg font-display mb-2">Modèle</h2>
+            <p class="text-2xl font-bold text-accent">{modele?.nom_modele}</p>
+          </div>
+
+          <!-- Résumé des couleurs -->
+          <div class="bg-base-100 rounded border border-black/10 p-6">
+            <h2 class="text-lg font-display mb-4">Couleurs choisies</h2>
+            <div class="space-y-3">
+              <!-- Monture -->
+              <div class="flex items-center justify-between">
+                <span class="text-base-content/70 capitalize">Monture</span>
+                <div class="flex items-center gap-2">
+                  {couleursChoisies.find(c => c.partie_ciblee === 'Monture') ? (
+                    <>
+                      <div 
+                        class="w-6 h-6 rounded-sm border border-black/10"
+                        style={`background-color: #${couleursChoisies.find(c => c.partie_ciblee === 'Monture')?.expand?.id_materiau?.code_valeur}`}
+                      />
+                      <span class="text-sm text-base-content/60">
+                        #{couleursChoisies.find(c => c.partie_ciblee === 'Monture')?.expand?.id_materiau?.code_valeur}
+                      </span>
+                    </>
+                  ) : (
+                    <span class="text-sm text-base-content/40">Non choisi</span>
+                  )}
+                </div>
+              </div>
+
+              <!-- Verres -->
+              <div class="flex items-center justify-between">
+                <span class="text-base-content/70 capitalize">Verres</span>
+                <div class="flex items-center gap-2">
+                  {couleursChoisies.find(c => c.partie_ciblee === 'Verres') ? (
+                    <>
+                      <div 
+                        class="w-6 h-6 rounded-sm border border-black/10"
+                        style={`background-color: #${couleursChoisies.find(c => c.partie_ciblee === 'Verres')?.expand?.id_materiau?.code_valeur}`}
+                      />
+                      <span class="text-sm text-base-content/60">
+                        #{couleursChoisies.find(c => c.partie_ciblee === 'Verres')?.expand?.id_materiau?.code_valeur}
+                      </span>
+                    </>
+                  ) : (
+                    <span class="text-sm text-base-content/40">Non choisi</span>
+                  )}
+                </div>
+              </div>
+
+              <!-- Branches -->
+              <div class="flex items-center justify-between">
+                <span class="text-base-content/70 capitalize">Branches</span>
+                <div class="flex items-center gap-2">
+                  {couleursChoisies.find(c => c.partie_ciblee === 'Branches') ? (
+                    <>
+                      <div 
+                        class="w-6 h-6 rounded-sm border border-black/10"
+                        style={`background-color: #${couleursChoisies.find(c => c.partie_ciblee === 'Branches')?.expand?.id_materiau?.code_valeur}`}
+                      />
+                      <span class="text-sm text-base-content/60">
+                        #{couleursChoisies.find(c => c.partie_ciblee === 'Branches')?.expand?.id_materiau?.code_valeur}
+                      </span>
+                    </>
+                  ) : (
+                    <span class="text-sm text-base-content/40">Non choisi</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Création -->
+          <div class="bg-base-100 rounded border border-black/10 p-6">
+            <h2 class="text-lg font-display mb-2">Nom de votre création</h2>
+            <p class="text-xl font-semibold">{creation.nom_creation}</p>
+          </div>
+
+          <!-- Prix -->
+          <div class="bg-accent text-accent-content rounded border border-accent p-6">
+            <h2 class="text-lg font-display mb-2">Prix total</h2>
+            <p class="text-4xl font-bold">{prix.toFixed(2)}€</p>
+            <p class="text-xs mt-2 opacity-80">Frais de port inclus</p>
+          </div>
+
+          <!-- ✅ Bouton Allons-y → Panier -->
+          <button 
+            id="add-to-cart" 
+            class="btn btn-accent btn-lg w-full text-lg gap-2 rounded"
+          >
+            🛒 Allons-y !
+          </button>
+
+          <!-- Retour bas -->
+          <button 
+            onclick="history.back()" 
+            class="btn btn-outline btn-lg rounded"
+          >
+            ← Retour
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script define:vars={{ creationId: id }}>
+    document.getElementById('add-to-cart')?.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/addToCart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ creationId })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          window.location.href = '/panier'; // ✅ Aller au panier
+        } else {
+          alert('Erreur : ' + result.error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Erreur lors de l\'ajout au panier');
+      }
+    });
+  </script>
+</Layout>
