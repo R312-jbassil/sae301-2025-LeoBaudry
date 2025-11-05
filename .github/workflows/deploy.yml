@@ -47,7 +47,5 @@ jobs:
         port: 22015
         script: |
           cd /var/www/sae301/server
-          npm ci
-          npm install astro
-          npm install send server-destroy
+          npm install
           PORT=8088 pm2 restart sae301 || PORT=8088 pm2 start entry.mjs --name sae301
