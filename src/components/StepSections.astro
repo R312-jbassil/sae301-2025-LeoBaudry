@@ -1,7 +1,4 @@
 ---
-import { Picture } from 'astro:assets';
-import personSteps from '../assets/images/personstep.png';
-
 const steps = [
   { id: 1, text: "Connectez-vous ou créez un compte !" },
   { id: 2, text: "Accédez à la page de configuration." },
@@ -14,12 +11,10 @@ const steps = [
 <section class="bg-secondary text-white py-6 relative">
   <!-- Image en background à gauche -->
   <div class="absolute left-0 top-0 w-1/2 h-full hidden lg:block overflow-hidden">
-    <Picture
-      src={personSteps}
+    <img
+      src="/images/personstep.png"
       alt=""
       class="w-full h-full object-cover"
-      widths={[400, 800]}
-      formats={['avif', 'webp']}
     />
   </div>
 
@@ -51,12 +46,8 @@ const steps = [
     <p class="text-center text-lg pb-8 lg:text-right lg:pr-12" id="step-description">
       {steps[0].text}
     </p>
-
   </div>
 </section>
-
-
-
 
 <style>
   .step-button {

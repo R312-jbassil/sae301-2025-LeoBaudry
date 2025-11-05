@@ -1,28 +1,16 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { Picture } from 'astro:assets';
 import ModelCarousel from '../components/ModelCarousel.astro';
 import StepsSection from '../components/StepSections.astro';
-
-// Import des images
-import heroImage from '../assets/images/hero.jpg';
-import lifestyle1 from '../assets/images/lifestyle-1.jpg';
-import lifestyle2 from '../assets/images/lifestyle-2.jpg';
-import lifestyle3 from '../assets/images/lifestyle-3.jpg';
-import lifestyle4 from '../assets/images/lifestyle-4.jpg';
-import personSteps from '../assets/images/personstep.png';
 ---
 
 <Layout title="TAVUE - Lunettes personnalisées">
   <!-- Hero Section : 60vh -->
   <section class="relative h-[60vh] overflow-hidden">
-    <Picture
-      src={heroImage}
+    <img 
+      src="/images/hero.webp" 
       alt="TAVUE"
-      class="w-full h-full object-cover object-top"
-      widths={[400, 800, 1200]}
-      sizes="100vw"
-      formats={['avif', 'webp']}
+      class="w-full h-full object-cover object-top" 
     />
     <div class="relative z-10 flex items-center justify-center h-full">
       <h1 class="text-9xl font-display font-bold text-white">TAVUE</h1>
@@ -34,16 +22,10 @@ import personSteps from '../assets/images/personstep.png';
 
   <!-- Galerie 4 images -->
   <section class="grid grid-cols-2 lg:grid-cols-4 gap-8">
-    {[lifestyle1, lifestyle2, lifestyle3, lifestyle4].map((img) => (
-      <Picture
-        src={img}
-        alt=""
-        class="w-full h-80 object-cover"
-        widths={[300, 600]}
-        sizes="(max-width: 1024px) 50vw, 25vw"
-        formats={['avif', 'webp']}
-      />
-    ))}
+    <img src="/images/lifestyle-1.webp" alt="" class="w-full h-80 object-cover" />
+    <img src="/images/lifestyle-2.webp" alt="" class="w-full h-80 object-cover" />
+    <img src="/images/lifestyle-3.webp" alt="" class="w-full h-80 object-cover" />
+    <img src="/images/lifestyle-4.webp" alt="" class="w-full h-80 object-cover" />
   </section>
 
   <!-- Titre (réduit) -->
@@ -96,5 +78,4 @@ import personSteps from '../assets/images/personstep.png';
       </p>
     </div>
   </section>
-
 </Layout>
