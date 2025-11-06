@@ -3,3 +3,12 @@ MDP admin PB: SAE301SAE301
 
 login utilisateur "test1" PB : test1@gmail.com
 MDP utilisateur "test1" PB : ws9z9ehgZ9WzgFM
+
+login utilisateur "coolcool" PB : coolcool@gmail.com
+MDP utilisateur "coolcool" PB : coolcool
+
+login utilisateur "test8" PB : test8@gmail.com
+MDP utilisateur "test8" PB   : test8test8
+
+login utilisateur "leotest" PB : leotest@gmail.com
+MDP utilisateur "leotest" PB : leotestleotest

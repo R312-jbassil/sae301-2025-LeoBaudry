@@ -1,0 +1,9 @@
+url de l'application web : https://sae-301.leo-baudry.fr/ 
+url de la base de données : https://sae-301.leo-baudry.fr/_/
+lien vers dépôt github : https://github.com/R312-jbassil/sae301-2025-LeoBaudry   
+
+et le compte admin de pocketbase sur le VPS : 
+id : leo.baudry@edu.univ-fcomte.fr 
+MDP : SAE301SAE301 
+
+(ça ne fonctionne pas, le PB n'arrive pas à se déployer malgré mes efforts, et ceux de monsieur H.Mabed...) (explications readme)
